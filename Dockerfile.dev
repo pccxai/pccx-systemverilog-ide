@@ -1,0 +1,68 @@
+# syntax=docker/dockerfile:1
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 pccxai
+
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+ENV VIRTUAL_ENV=/opt/systemverilog-ide-venv
+ENV PATH="/opt/oss-cad-suite/bin:${VIRTUAL_ENV}/bin:${PATH}"
+
+RUN sed -i 's/^Components: main$/Components: main universe/' /etc/apt/sources.list.d/ubuntu.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        gtkwave \
+        iverilog \
+        libxrt-utils \
+        make \
+        nodejs \
+        npm \
+        openfpgaloader \
+        openocd \
+        python3 \
+        python3-dev \
+        python3-pip \
+        python3-venv \
+        verilator \
+        xc3sprog \
+        xilinx-bootgen \
+        yosys \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG INSTALL_OSS_CAD_SUITE=1
+ARG OSS_CAD_SUITE_VERSION=2026-04-18
+ARG OSS_CAD_SUITE_ARCH=linux-x64
+
+RUN if [ "${INSTALL_OSS_CAD_SUITE}" = "1" ]; then \
+        archive_date="$(printf '%s' "${OSS_CAD_SUITE_VERSION}" | tr -d '-')"; \
+        curl -fsSL -o /tmp/oss-cad-suite.tgz \
+            "https://github.com/YosysHQ/oss-cad-suite-build/releases/download/${OSS_CAD_SUITE_VERSION}/oss-cad-suite-${OSS_CAD_SUITE_ARCH}-${archive_date}.tgz"; \
+        tar -xzf /tmp/oss-cad-suite.tgz -C /opt; \
+        rm -f /tmp/oss-cad-suite.tgz; \
+    fi
+
+RUN python3 -m venv "${VIRTUAL_ENV}" \
+    && pip install --no-cache-dir --upgrade pip setuptools wheel
+
+WORKDIR /workspace/systemverilog-ide
+COPY . .
+
+ARG USERNAME=svide
+ARG USER_UID=10001
+ARG USER_GID=${USER_UID}
+
+RUN rm -rf .git \
+    && pip install --no-cache-dir -e ".[test]" \
+    && npm ci --prefix editors/vscode-prototype \
+    && groupadd --gid "${USER_GID}" "${USERNAME}" \
+    && useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}" \
+    && chown -R "${USERNAME}:${USERNAME}" /workspace/systemverilog-ide
+
+USER ${USERNAME}
+
+CMD ["/bin/bash"]
