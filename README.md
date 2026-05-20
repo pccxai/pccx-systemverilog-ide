@@ -21,6 +21,9 @@ in [`docs/PROJECT_DIRECTION_AND_STYLE.md`](./docs/PROJECT_DIRECTION_AND_STYLE.md
 New code files and changed legacy code files are expected to carry the
 repository SPDX/Copyright header.
 
+A one-page contributor orientation is available in
+[`docs/WORKSPACE_ORIENTATION.md`](./docs/WORKSPACE_ORIENTATION.md).
+
 The initial Now / Next / Later roadmap is tracked in
 [`docs/ROADMAP.md`](./docs/ROADMAP.md).
 The SystemVerilog workflow boundary is tracked in
