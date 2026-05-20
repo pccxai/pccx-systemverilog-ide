@@ -241,6 +241,11 @@
           ],
           "default": "module",
           "description": "Experimental local prototype default declaration kind used by navigation; not a stable API."
+        },
+        "pccxSystemVerilog.kv260.preflightTranscriptPath": {
+          "type": "string",
+          "default": "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+          "description": "Experimental local prototype path for the read-only KV260 preflight transcript summary; not a stable API."
         }
       }
     }

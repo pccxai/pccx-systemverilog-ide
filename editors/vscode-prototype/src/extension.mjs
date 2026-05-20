@@ -2,6 +2,8 @@
 // Copyright 2026 pccxai
 
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -75,6 +77,7 @@ import {
 import {
   createKv260StatusPanel,
   formatKv260StatusPanel,
+  parseKv260PreflightTranscript,
   renderKv260StatusPanelHtml,
 } from "./kv260-status-panel.mjs";
 
@@ -494,6 +497,35 @@ function diagnosticFileForUri(file, root = DEFAULT_DIAGNOSTIC_FILE_ROOT) {
     return filePath;
   }
   return resolve(root, filePath);
+}
+
+function resolveConfiguredPath(path, runtime = {}) {
+  const value = typeof path === "string" ? path : "";
+  if (value === "~") {
+    return runtime.homeDir ?? homedir();
+  }
+  if (value.startsWith("~/")) {
+    return resolve(runtime.homeDir ?? homedir(), value.slice(2));
+  }
+  if (isAbsolute(value)) {
+    return value;
+  }
+  return resolve(runtime.repoRoot ?? DEFAULT_DIAGNOSTIC_FILE_ROOT, value);
+}
+
+export async function readKv260PreflightTranscriptSummary(rawConfig = {}, runtime = {}) {
+  if (typeof runtime.kv260PreflightTranscriptText === "string") {
+    return parseKv260PreflightTranscript(runtime.kv260PreflightTranscriptText);
+  }
+  const config = normalizeConfig(rawConfig);
+  const configuredPath = config.kv260.preflightTranscriptPath;
+  const transcriptPath = resolveConfiguredPath(configuredPath, runtime);
+  const reader = runtime.kv260PreflightTranscriptReader ?? readFile;
+  try {
+    return parseKv260PreflightTranscript(await reader(transcriptPath, "utf8"));
+  } catch {
+    return parseKv260PreflightTranscript("");
+  }
 }
 
 export function createPresenterDeps(vscodeApi, runtime = {}) {
@@ -1139,7 +1171,11 @@ export function createCommandHandler(commandId, vscodeApi, runtime = {}) {
     if (commandId === SHOW_KV260_STATUS_PANEL_COMMAND) {
       let result;
       try {
-        const panel = createKv260StatusPanel(runtime.kv260StatusInputs);
+        const preflightTranscript = await readKv260PreflightTranscriptSummary(rawConfig, runtime);
+        const panel = createKv260StatusPanel({
+          ...(runtime.kv260StatusInputs ?? {}),
+          preflightTranscript,
+        });
         result = {
           ok: true,
           commandId,

@@ -18,6 +18,19 @@ export const DEFAULT_SERIAL_PREFLIGHT_STATUS = Object.freeze({
   last_preflight_at: null,
 });
 
+export const DEFAULT_PREFLIGHT_TRANSCRIPT_SUMMARY = Object.freeze({
+  status: "not_captured",
+  captured: false,
+  winningPort: null,
+  baud: null,
+  loginOk: null,
+  uname: null,
+  unameDisplay: "no preflight captured yet",
+  xrtVersion: null,
+  xmutilAppCount: null,
+  message: "no preflight captured yet",
+});
+
 export const DEFAULT_LAUNCHER_NPU_STATUS = Object.freeze({
   bitstream_loaded: false,
   bitstream_uuid: null,
@@ -178,6 +191,13 @@ function optionalIntegerField(value, path, errors) {
   return value;
 }
 
+function optionalNonNegativeIntegerField(value, path, errors) {
+  if (value == null) {
+    return null;
+  }
+  return integerField(value, path, errors);
+}
+
 function integerField(value, path, errors) {
   if (!Number.isSafeInteger(value) || value < 0) {
     addError(errors, path, "must be a non-negative integer");
@@ -193,6 +213,181 @@ function firstPresent(value, keys) {
     }
   }
   return undefined;
+}
+
+function compactWhitespace(value) {
+  return String(value ?? "")
+    .replace(/\x1b\[[0-9;]*m/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function boundedSingleLine(value, maxCharacters = 160) {
+  const text = compactWhitespace(value);
+  if (text.length <= maxCharacters) {
+    return text;
+  }
+  return `${text.slice(0, maxCharacters - 3)}...`;
+}
+
+function parseBooleanText(value) {
+  const text = compactWhitespace(value).toLowerCase();
+  if (/^(?:ok|pass|passed|true|yes|success|successful)$/.test(text)) {
+    return true;
+  }
+  if (/^(?:fail|failed|false|no|not ok|blocked)$/.test(text)) {
+    return false;
+  }
+  return null;
+}
+
+function parseIntegerText(value) {
+  const text = compactWhitespace(value);
+  if (!/^\d+$/.test(text)) {
+    return null;
+  }
+  const parsed = Number.parseInt(text, 10);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function firstMatch(text, patterns, map = (match) => match[1]) {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const value = map(match);
+      if (value != null && value !== "") {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+
+function parseWinningPort(text) {
+  return firstMatch(text, [
+    /\b(?:winning|selected|chosen)\s+(?:serial\s+)?port\s*[:=]\s*([^\s,;@]+)/i,
+    /\bport\s*[:=]\s*([^\s,;@]+)[^\n\r]{0,80}\bbaud\b/i,
+    /\b([/A-Za-z0-9_.:-]*(?:tty|cu|COM)[A-Za-z0-9_.:-]*)\s*@\s*\d{4,7}\b/i,
+  ], (match) => boundedSingleLine(match[1], 80));
+}
+
+function parseBaud(text) {
+  return firstMatch(text, [
+    /\b(?:winning|selected|chosen)\s+(?:serial\s+)?port\s*[:=]\s*[^\s,;@]+(?:\s*(?:@|,|\bbaud\b)\s*(?:baud\s*)?)(\d{4,7})\b/i,
+    /\bbaud(?:rate)?\s*[:=]?\s*(\d{4,7})\b/i,
+    /\b[/A-Za-z0-9_.:-]*(?:tty|cu|COM)[A-Za-z0-9_.:-]*\s*@\s*(\d{4,7})\b/i,
+  ], (match) => parseIntegerText(match[1]));
+}
+
+function parseLoginOk(text) {
+  return firstMatch(text, [
+    /\blogin[_\s-]*ok\s*[:=]\s*(ok|pass|passed|true|yes|success|successful|fail|failed|false|no|not ok|blocked)\b/i,
+    /\blogin\s*[:=]\s*(ok|pass|passed|true|yes|success|successful|fail|failed|false|no|not ok|blocked)\b/i,
+    /\blogin\s+(ok|successful|failed)\b/i,
+  ], (match) => parseBooleanText(match[1]));
+}
+
+function parseUname(text) {
+  return firstMatch(text, [
+    /\b(?:kernel[_\s-]*)?uname(?:\s+-a)?\s*[:=]\s*([^\n\r]+)/i,
+    /(?:^|\n)\s*\$?\s*uname\s+-a\s*\r?\n\s*([^\n\r]+)/i,
+  ], (match) => boundedSingleLine(match[1], 240));
+}
+
+function parseXrtVersion(text) {
+  return firstMatch(text, [
+    /\bxrt(?:[_\s-]*(?:version|build version))?\s*[:=]\s*([^\n\r]+)/i,
+    /\bxrt-smi[^\n\r]{0,80}\bversion\s*[:=]\s*([^\n\r]+)/i,
+  ], (match) => boundedSingleLine(match[1], 120));
+}
+
+function parseXmutilAppCount(text) {
+  return firstMatch(text, [
+    /\bxmutil(?:\s+(?:app|apps|application|applications))?\s+count\s*[:=]\s*(\d+)\b/i,
+    /\bxmutil[^\n\r]{0,80}\b(?:app|apps|application|applications)\b[^\n\r]{0,40}\bcount\s*[:=]\s*(\d+)\b/i,
+    /\bxmutil[^\n\r]{0,80}\b(\d+)\s+(?:app|apps|application|applications)\b/i,
+  ], (match) => parseIntegerText(match[1]));
+}
+
+function normalizePreflightTranscriptSummary(summary = DEFAULT_PREFLIGHT_TRANSCRIPT_SUMMARY) {
+  const errors = [];
+  if (!isObject(summary)) {
+    throw new Error("preflight transcript summary must be an object");
+  }
+  const captured = summary.captured === true || summary.status === "captured";
+  const normalized = {
+    status: captured ? "captured" : "not_captured",
+    captured,
+    winningPort: optionalStringField(
+      summary.winningPort,
+      "preflightTranscript.winningPort",
+      errors,
+      80,
+    ),
+    baud: optionalNonNegativeIntegerField(summary.baud, "preflightTranscript.baud", errors),
+    loginOk: optionalBoolField(summary.loginOk, "preflightTranscript.loginOk", errors),
+    uname: optionalStringField(summary.uname, "preflightTranscript.uname", errors, 240),
+    xrtVersion: optionalStringField(
+      summary.xrtVersion,
+      "preflightTranscript.xrtVersion",
+      errors,
+      120,
+    ),
+    xmutilAppCount: optionalNonNegativeIntegerField(
+      summary.xmutilAppCount,
+      "preflightTranscript.xmutilAppCount",
+      errors,
+    ),
+    message: optionalStringField(summary.message, "preflightTranscript.message", errors, 160),
+  };
+  normalized.unameDisplay = captured
+    ? truncateText(normalized.uname, 80)
+    : DEFAULT_PREFLIGHT_TRANSCRIPT_SUMMARY.unameDisplay;
+  normalized.message = normalized.message ??
+    (captured ? "preflight transcript captured" : DEFAULT_PREFLIGHT_TRANSCRIPT_SUMMARY.message);
+  assertSafeText(normalized, errors);
+  if (errors.length > 0) {
+    throw new Error(`invalid preflight transcript summary: ${errors.join("; ")}`);
+  }
+  return Object.freeze(normalized);
+}
+
+export function parseKv260PreflightTranscript(text = "") {
+  const transcript = typeof text === "string" ? text : "";
+  if (transcript.trim().length === 0) {
+    return normalizePreflightTranscriptSummary();
+  }
+  const summary = {
+    status: "captured",
+    captured: true,
+    winningPort: parseWinningPort(transcript),
+    baud: parseBaud(transcript),
+    loginOk: parseLoginOk(transcript),
+    uname: parseUname(transcript),
+    xrtVersion: parseXrtVersion(transcript),
+    xmutilAppCount: parseXmutilAppCount(transcript),
+    message: "preflight transcript captured",
+  };
+  if (
+    summary.winningPort == null &&
+    summary.baud == null &&
+    summary.loginOk == null &&
+    summary.uname == null &&
+    summary.xrtVersion == null &&
+    summary.xmutilAppCount == null
+  ) {
+    return normalizePreflightTranscriptSummary();
+  }
+  return normalizePreflightTranscriptSummary(summary);
+}
+
+function preflightTranscriptFromInput(inputs) {
+  if (typeof inputs.preflightTranscriptText === "string") {
+    return parseKv260PreflightTranscript(inputs.preflightTranscriptText);
+  }
+  return normalizePreflightTranscriptSummary(
+    inputs.preflightTranscript ?? inputs.preflightTranscriptSummary,
+  );
 }
 
 function arrayField(value, path, errors) {
@@ -436,6 +631,7 @@ export function createPreflightProposal(launcherStatus, _traceManifest) {
 export function createKv260StatusPanel(inputs = {}) {
   const launcherStatus = LauncherStatusReader.consume(inputs.launcherStatus);
   const traceManifest = LabTraceReader.consume(inputs.traceManifest);
+  const preflightTranscript = preflightTranscriptFromInput(inputs);
   return Object.freeze({
     version: KV260_STATUS_PANEL_VERSION,
     kind: "kv260-status-panel",
@@ -468,6 +664,7 @@ export function createKv260StatusPanel(inputs = {}) {
       runbookRef: traceManifest.runbook_ref,
     }),
     preflight: createPreflightProposal(launcherStatus, traceManifest),
+    preflightTranscript,
     safety: Object.freeze({
       dataOnly: true,
       readOnly: true,
@@ -492,6 +689,10 @@ export function kv260StatusPanelJson(inputs = {}) {
 
 export function renderKv260StatusPanelHtml(panel = createKv260StatusPanel()) {
   const emptyState = panelEmptyState(panel);
+  const transcript = panel.preflightTranscript ?? DEFAULT_PREFLIGHT_TRANSCRIPT_SUMMARY;
+  const transcriptWinning = transcript.winningPort
+    ? `${transcript.winningPort}${transcript.baud == null ? "" : ` @ ${transcript.baud}`}`
+    : "not captured";
   const checklistItems = panel.preflight.items.map((item) => {
     const status = statusPresentationForItem(item);
     const evidencePath = evidencePathForItem(item);
@@ -604,6 +805,22 @@ export function renderKv260StatusPanelHtml(panel = createKv260StatusPanel()) {
       font-family: var(--vscode-editor-font-family, ui-monospace, monospace);
       overflow-wrap: anywhere;
     }
+    .summary-card {
+      margin: 14px 0 18px;
+      padding: 12px;
+      border: 1px solid var(--panel-border);
+      background: var(--panel-soft);
+    }
+    .summary-card h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+    .summary-card .summary-state {
+      margin: 0 0 10px;
+      color: var(--panel-muted);
+    }
     .checklist {
       list-style: none;
       margin: 0;
@@ -702,6 +919,22 @@ export function renderKv260StatusPanelHtml(panel = createKv260StatusPanel()) {
         <span class="metadata-value">${escapeHtml(`${panel.lab.sourceKind}; ${panel.lab.frameCount} frame(s)`)}</span>
       </div>
     </section>
+    <section class="summary-card" aria-label="Preflight transcript summary">
+      <h2>Preflight Transcript</h2>
+      <p class="summary-state">${escapeHtml(transcript.message)}</p>
+      <dl>
+        <dt>Winning port</dt>
+        <dd>${escapeHtml(transcriptWinning)}</dd>
+        <dt>Login OK</dt>
+        <dd>${escapeHtml(transcript.loginOk == null ? "not captured" : yesNo(transcript.loginOk))}</dd>
+        <dt>uname</dt>
+        <dd>${escapeHtml(transcript.unameDisplay)}</dd>
+        <dt>XRT version</dt>
+        <dd>${escapeHtml(transcript.xrtVersion || "not captured")}</dd>
+        <dt>xmutil apps</dt>
+        <dd>${escapeHtml(transcript.xmutilAppCount == null ? "not captured" : String(transcript.xmutilAppCount))}</dd>
+      </dl>
+    </section>
     <ol class="checklist" aria-label="Readiness checklist">
       ${checklistItems}
     </ol>
@@ -731,6 +964,24 @@ export function formatKv260StatusPanel(panel = createKv260StatusPanel()) {
     `lab.frames: ${panel.lab.frameCount}`,
     `lab.axiBase: ${panel.lab.axiBase}`,
     `lab.isaVersion: ${panel.lab.isaVersion}`,
+    `preflightTranscript: ${panel.preflightTranscript.message}`,
+    `preflightTranscript.winning: ${
+      panel.preflightTranscript.winningPort
+        ? `${panel.preflightTranscript.winningPort}${
+          panel.preflightTranscript.baud == null ? "" : ` @ ${panel.preflightTranscript.baud}`
+        }`
+        : "not captured"
+    }`,
+    `preflightTranscript.loginOk: ${
+      panel.preflightTranscript.loginOk == null ? "not captured" : yesNo(panel.preflightTranscript.loginOk)
+    }`,
+    `preflightTranscript.uname: ${panel.preflightTranscript.unameDisplay}`,
+    `preflightTranscript.xrtVersion: ${panel.preflightTranscript.xrtVersion || "not captured"}`,
+    `preflightTranscript.xmutilAppCount: ${
+      panel.preflightTranscript.xmutilAppCount == null
+        ? "not captured"
+        : panel.preflightTranscript.xmutilAppCount
+    }`,
     "preflight:",
   ];
   for (const item of panel.preflight.items) {

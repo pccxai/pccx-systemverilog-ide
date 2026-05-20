@@ -30,6 +30,7 @@ import {
   createPresenterDeps,
   createCommandHandler,
   deactivate,
+  readKv260PreflightTranscriptSummary,
   readExtensionConfig,
   resolveCommandRequest,
 } from "../src/extension.mjs";
@@ -282,6 +283,9 @@ function testResolveCommandRequestUsesVsCodeSettings() {
     defaultNavigationRoot: "configured/modules",
     defaultModule: "pkg_defs",
     defaultDeclarationKind: "package",
+    kv260: {
+      preflightTranscriptPath: "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+    },
   });
   assert.deepEqual(
     resolveCommandRequest("pccxSystemVerilog.runDiagnosticsLive", undefined, vscodeApi),
@@ -310,6 +314,9 @@ function testResolveCommandRequestUsesVsCodeSettings() {
       defaultNavigationRoot: "configured/modules",
       defaultModule: "pkg_defs",
       defaultDeclarationKind: "package",
+      kv260: {
+        preflightTranscriptPath: "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+      },
     },
   );
   assert.deepEqual(
@@ -339,6 +346,9 @@ function testResolveCommandRequestUsesVsCodeSettings() {
       defaultNavigationRoot: "configured/modules",
       defaultModule: "pkg_defs",
       defaultDeclarationKind: "package",
+      kv260: {
+        preflightTranscriptPath: "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+      },
     },
   );
   assert.deepEqual(
@@ -368,6 +378,9 @@ function testResolveCommandRequestUsesVsCodeSettings() {
       defaultNavigationRoot: "configured/modules",
       defaultModule: "pkg_defs",
       defaultDeclarationKind: "package",
+      kv260: {
+        preflightTranscriptPath: "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+      },
     },
   );
 }
@@ -1550,7 +1563,13 @@ async function testPccxLabBackendStatusCommandReturnsStatusOnly() {
 }
 
 async function testKv260StatusPanelCommandReturnsDataOnlySurface() {
-  const handler = createCommandHandler(SHOW_KV260_STATUS_PANEL_COMMAND, null, {});
+  const handler = createCommandHandler(SHOW_KV260_STATUS_PANEL_COMMAND, null, {
+    async kv260PreflightTranscriptReader() {
+      const error = new Error("missing");
+      error.code = "ENOENT";
+      throw error;
+    },
+  });
 
   const result = await handler();
 
@@ -1564,6 +1583,7 @@ async function testKv260StatusPanelCommandReturnsDataOnlySurface() {
   assert.equal(result.panel.safety.pccxLabExecution, false);
   assert.equal(result.panel.safety.shellExecution, false);
   assert.equal(result.panel.safety.sshExecution, false);
+  assert.equal(result.panel.preflightTranscript.message, "no preflight captured yet");
 }
 
 async function testKv260StatusPanelCommandRendersExistingWebviewOnly() {
@@ -1581,7 +1601,15 @@ async function testKv260StatusPanelCommandRendersExistingWebviewOnly() {
       showInformationMessage() {},
     },
   };
-  const handler = createCommandHandler(SHOW_KV260_STATUS_PANEL_COMMAND, vscodeApi, {});
+  const handler = createCommandHandler(SHOW_KV260_STATUS_PANEL_COMMAND, vscodeApi, {
+    kv260PreflightTranscriptText: [
+      "selected port: /dev/ttyUSB2 baud 115200",
+      "login: ok",
+      "uname: Linux kv260 6.6.0-xilinx aarch64 GNU/Linux",
+      "xrt version: 2.16.204",
+      "xmutil app count: 4",
+    ].join("\n"),
+  });
 
   const result = await handler();
 
@@ -1590,6 +1618,62 @@ async function testKv260StatusPanelCommandRendersExistingWebviewOnly() {
   assert.match(webviewPanel.webview.html, /class="aperture-mark"/);
   assert.match(webviewPanel.webview.html, /status-pill status-pending">PENDING/);
   assert.match(webviewPanel.webview.html, /<details class="evidence-path">/);
+  assert.match(webviewPanel.webview.html, /\/dev\/ttyUSB2 @ 115200/);
+  assert.equal(result.panel.preflightTranscript.xmutilAppCount, 4);
+}
+
+async function testKv260PreflightTranscriptPathIsConfigurableAndGraceful() {
+  const settings = new Map([
+    ["kv260.preflightTranscriptPath", "~/private/preflight.md"],
+  ]);
+  const vscodeApi = {
+    workspace: {
+      getConfiguration() {
+        return {
+          get(key) {
+            return settings.get(key);
+          },
+        };
+      },
+    },
+  };
+  const readCalls = [];
+  const summary = await readKv260PreflightTranscriptSummary(
+    readExtensionConfig(vscodeApi),
+    {
+      homeDir: "/tmp/home",
+      async kv260PreflightTranscriptReader(path, encoding) {
+        readCalls.push([path, encoding]);
+        return [
+          "winning port: /dev/ttyUSB3 @ 921600",
+          "login_ok: yes",
+          "uname -a: Linux kv260 6.6.0-test aarch64 GNU/Linux",
+          "xrt version: 2.17.0",
+          "xmutil app count: 2",
+        ].join("\n");
+      },
+    },
+  );
+  const missing = await readKv260PreflightTranscriptSummary(
+    readExtensionConfig(vscodeApi),
+    {
+      homeDir: "/tmp/home",
+      async kv260PreflightTranscriptReader() {
+        const error = new Error("missing");
+        error.code = "ENOENT";
+        throw error;
+      },
+    },
+  );
+
+  assert.deepEqual(readCalls, [["/tmp/home/private/preflight.md", "utf8"]]);
+  assert.equal(summary.winningPort, "/dev/ttyUSB3");
+  assert.equal(summary.baud, 921600);
+  assert.equal(summary.loginOk, true);
+  assert.equal(summary.xrtVersion, "2.17.0");
+  assert.equal(summary.xmutilAppCount, 2);
+  assert.equal(missing.captured, false);
+  assert.equal(missing.message, "no preflight captured yet");
 }
 
 testKnownFacadeArgs();
@@ -1622,5 +1706,6 @@ await testDiagnosticsHandoffSummaryCommandReturnsDataOnlySurface();
 await testPccxLabBackendStatusCommandReturnsStatusOnly();
 await testKv260StatusPanelCommandReturnsDataOnlySurface();
 await testKv260StatusPanelCommandRendersExistingWebviewOnly();
+await testKv260PreflightTranscriptPathIsConfigurableAndGraceful();
 
 console.log("vscode extension entrypoint tests ok");
