@@ -159,6 +159,9 @@ The contributed color themes are:
 - `pccx SystemVerilog Light`
 - `pccx SystemVerilog Dark`
 
+Light/dark maintenance expectations are documented in
+[`docs/theme-consistency.md`](./docs/theme-consistency.md).
+
 The extension icon is `assets/logo/aperture-mark-128.png`, with source
 SVG logo assets retained under `assets/logo/`.  The copied-asset notice is
 tracked in `assets/PCCX_UI_NOTICE.md`.
