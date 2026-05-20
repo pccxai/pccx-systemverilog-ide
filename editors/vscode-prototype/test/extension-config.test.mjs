@@ -38,6 +38,13 @@ const REQUIRED_SETTINGS = new Map([
   ["pccxSystemVerilog.defaultNavigationRoot", { type: "string", default: "fixtures/modules" }],
   ["pccxSystemVerilog.defaultModule", { type: "string", default: "simple_mod" }],
   ["pccxSystemVerilog.defaultDeclarationKind", { type: "string", default: "module" }],
+  [
+    "pccxSystemVerilog.kv260.preflightTranscriptPath",
+    {
+      type: "string",
+      default: "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+    },
+  ],
 ]);
 
 const LIVE_WORKSPACE_CONFIG = {
@@ -114,6 +121,9 @@ function testDefaultConfig() {
     defaultNavigationRoot: "fixtures/modules",
     defaultModule: "simple_mod",
     defaultDeclarationKind: "module",
+    kv260: {
+      preflightTranscriptPath: "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+    },
   });
 }
 
@@ -169,6 +179,10 @@ function testNormalizeConfigRejectsInvalidSettings() {
   assert.throws(
     () => normalizeConfig({ defaultNavigationRoot: "fixtures/modules && whoami" }),
     /pccxSystemVerilog\.defaultNavigationRoot must not contain shell control syntax/,
+  );
+  assert.throws(
+    () => normalizeConfig({ kv260: { preflightTranscriptPath: "preflight.md; cat secret" } }),
+    /pccxSystemVerilog\.kv260\.preflightTranscriptPath must not contain shell control syntax/,
   );
 }
 

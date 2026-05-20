@@ -20,6 +20,7 @@ export const CONFIG_KEYS = Object.freeze([
   "defaultNavigationRoot",
   "defaultModule",
   "defaultDeclarationKind",
+  "kv260.preflightTranscriptPath",
 ]);
 
 export const FACADE_COMMAND_IDS = Object.freeze([
@@ -105,6 +106,9 @@ const DEFAULT_CONFIG = Object.freeze({
   defaultNavigationRoot: "fixtures/modules",
   defaultModule: "simple_mod",
   defaultDeclarationKind: "module",
+  kv260: Object.freeze({
+    preflightTranscriptPath: "~/.codex/private-state/board-preflight/preflight-tty-2026-05-06.md",
+  }),
 });
 
 const SHELL_CONTROL_PATTERN = /(?:&&|\|\||;|`|\$\()/;
@@ -197,6 +201,7 @@ export function defaultConfig() {
     pccxLab: { ...DEFAULT_CONFIG.pccxLab },
     workflowBoundary: { ...DEFAULT_CONFIG.workflowBoundary },
     validationRunner: { ...DEFAULT_CONFIG.validationRunner },
+    kv260: { ...DEFAULT_CONFIG.kv260 },
   };
 }
 
@@ -272,6 +277,13 @@ export function normalizeConfig(rawConfig = {}) {
       DEFAULT_CONFIG.defaultDeclarationKind,
       DECLARATION_KINDS,
     ),
+    kv260: {
+      preflightTranscriptPath: stringSetting(
+        rawConfig,
+        "kv260.preflightTranscriptPath",
+        DEFAULT_CONFIG.kv260.preflightTranscriptPath,
+      ),
+    },
   };
 }
 
