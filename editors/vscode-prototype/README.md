@@ -170,6 +170,9 @@ The prototype-only settings are:
 - `pccxSystemVerilog.panel.refreshIntervalMs`, default `5000`
 - `pccxSystemVerilog.logLevel`, default `info`
 
+A setting-by-setting reference is maintained in
+[`docs/settings-reference.md`](./docs/settings-reference.md).
+
 The settings contribution in `package.json` mirrors the checked schema in
 [`../../schema/sv-ide-settings-v0.json`](../../schema/sv-ide-settings-v0.json)
 so VS Code reads the same schema shape for its Settings UI that tests use

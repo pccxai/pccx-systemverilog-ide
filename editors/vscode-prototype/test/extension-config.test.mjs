@@ -23,6 +23,10 @@ import {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const PACKAGE_JSON = resolve(ROOT, "editors/vscode-prototype/package.json");
 const SETTINGS_SCHEMA_JSON = resolve(ROOT, "schema/sv-ide-settings-v0.json");
+const SETTINGS_REFERENCE_MD = resolve(
+  ROOT,
+  "editors/vscode-prototype/docs/settings-reference.md",
+);
 
 const REQUIRED_SETTINGS = new Map([
   ["pccxSystemVerilog.mode", { type: "string", default: "checkedExample" }],
@@ -109,6 +113,24 @@ async function testPackageConfigurationSchema() {
     PANEL_DATA_SOURCES,
   );
   assert.deepEqual(configuration.properties["pccxSystemVerilog.logLevel"].enum, LOG_LEVELS);
+}
+
+async function testSettingsReferenceDocumentsSchema() {
+  const settingsSchema = await readSettingsSchema();
+  const settingsReference = await readFile(SETTINGS_REFERENCE_MD, "utf8");
+  const schemaSettings = Object.keys(settingsSchema.$defs.vscodeConfiguration.properties ?? {});
+
+  assert.match(settingsReference, /# Settings Reference/);
+  assert.match(settingsReference, /not a stable API/i);
+  assert.match(settingsReference, /sv-ide-settings-v0\.json/);
+
+  for (const setting of schemaSettings) {
+    assert.match(
+      settingsReference,
+      new RegExp(`^### \`${setting.replaceAll(".", "\\.")}\`$`, "m"),
+      `${setting} missing from settings reference`,
+    );
+  }
 }
 
 function testDefaultConfig() {
@@ -321,6 +343,7 @@ function testUnknownCommandAndShellShape() {
 }
 
 await testPackageConfigurationSchema();
+await testSettingsReferenceDocumentsSchema();
 testDefaultConfig();
 testNormalizeConfigRejectsInvalidSettings();
 testFacadeArgsForKnownCommands();
