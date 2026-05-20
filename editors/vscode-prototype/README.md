@@ -19,6 +19,10 @@ The package includes a copied pccx aperture-mark icon and a light
 visual branding only; they do not replace the host-theme-first
 presentation boundary and do not make the theme surface complete.
 
+A text-only first-use walkthrough for the command palette, Problems/Output
+panels, and current status-bar boundary is tracked in
+[`docs/typical-first-time-use.md`](./docs/typical-first-time-use.md).
+
 ## Boundary Roles
 
 `systemverilog-ide` is the editor cockpit: it owns VS Code command
