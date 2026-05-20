@@ -34,6 +34,9 @@ The later-track external editor integration plan is tracked in
 [`docs/EXTERNAL_EDITOR_INTEGRATION_PLAN.md`](./docs/EXTERNAL_EDITOR_INTEGRATION_PLAN.md).
 The module organization workflow is tracked in
 [`docs/MODULE_ORGANIZATION_WORKFLOW.md`](./docs/MODULE_ORGANIZATION_WORKFLOW.md).
+Open-source component disclosure for the npm and Python dependency
+manifests is tracked in
+[`docs/OPEN_SOURCE_COMPONENTS.md`](./docs/OPEN_SOURCE_COMPONENTS.md).
 
 ## Integration model
 
