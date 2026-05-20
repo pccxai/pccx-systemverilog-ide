@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 pccxai
+
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -257,7 +260,7 @@ async function testExtensionEntrypointCanWirePresenter() {
   assert.equal(typeof activate, "function");
   assert.equal(typeof deactivate, "function");
 
-  const registered = new Map();
+  const commandHandlers = new Map();
   const calls = {
     set: [],
     warning: [],
@@ -265,7 +268,7 @@ async function testExtensionEntrypointCanWirePresenter() {
   const vscodeApi = {
     commands: {
       registerCommand(commandId, handler) {
-        registered.set(commandId, handler);
+        commandHandlers.set(commandId, handler);
         return { dispose() {} };
       },
     },
@@ -306,8 +309,8 @@ async function testExtensionEntrypointCanWirePresenter() {
     },
   );
 
-  assert.deepEqual(activation.registered, COMMAND_IDS);
-  const result = await registered.get("pccxSystemVerilog.showDiagnosticsExample")();
+  assert.deepEqual(activation.commandIds, COMMAND_IDS);
+  const result = await commandHandlers.get("pccxSystemVerilog.showDiagnosticsExample")();
   assert.equal(result.ok, true);
   assert.equal(calls.set.length, 1);
   assert.deepEqual(calls.set[0].uri, { uri: "a.sv" });

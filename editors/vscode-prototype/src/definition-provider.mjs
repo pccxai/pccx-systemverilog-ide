@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 pccxai
+
 export const CHECKED_EXAMPLE_DEFINITION_PROVIDER_ID =
   "pccxSystemVerilog.definitionProvider.checkedExample";
 
@@ -46,7 +49,7 @@ export function registerCheckedExampleDefinitionProvider(vscodeApi, context, opt
   const registration = {
     id: CHECKED_EXAMPLE_DEFINITION_PROVIDER_ID,
     selector: CHECKED_EXAMPLE_DEFINITION_SELECTOR,
-    registered: false,
+    active: false,
   };
 
   if (typeof vscodeApi?.languages?.registerDefinitionProvider !== "function") {
@@ -62,6 +65,6 @@ export function registerCheckedExampleDefinitionProvider(vscodeApi, context, opt
 
   return {
     ...registration,
-    registered: true,
+    active: true,
   };
 }

@@ -21,6 +21,9 @@ import {
   SHOW_PATCH_PROPOSAL_PREVIEW_COMMAND,
   SHOW_RECENT_VALIDATION_RESULTS_COMMAND,
   SHOW_VALIDATION_CACHE_STATUS_COMMAND,
+  SHOW_ASSIST_STATUS_COMMAND,
+  RUN_VERIBLE_LINT_DIAGNOSTICS_COMMAND,
+  PREPARE_SIMULATION_HANDOFF_COMMAND,
   VALIDATION_PROPOSAL_COMMAND,
   activate,
   buildFacadeArgsForCommand,
@@ -236,6 +239,11 @@ function testResolveCommandRequestUsesVsCodeSettings() {
     ["validationRunner.defaultWorkingDirectory", "repo-root"],
     ["validationRunner.maxOutputLines", 120],
     ["validationRunner.timeoutMs", 30000],
+    ["assist.enabled", true],
+    ["assist.languageServer.enabled", true],
+    ["assist.languageServer.command", "verible-verilog-ls"],
+    ["assist.languageServer.requestTimeoutMs", 1500],
+    ["assist.lint.command", "verible-verilog-lint"],
     ["pythonPath", "python-custom"],
     ["defaultSource", "configured.sv"],
     ["defaultLog", "configured.log"],
@@ -275,6 +283,17 @@ function testResolveCommandRequestUsesVsCodeSettings() {
       maxOutputLines: 120,
       timeoutMs: 30000,
     },
+    assist: {
+      enabled: true,
+      languageServer: {
+        enabled: true,
+        command: "verible-verilog-ls",
+        requestTimeoutMs: 1500,
+      },
+      lint: {
+        command: "verible-verilog-lint",
+      },
+    },
     pythonPath: "python-custom",
     defaultSource: "configured.sv",
     defaultLog: "configured.log",
@@ -302,6 +321,17 @@ function testResolveCommandRequestUsesVsCodeSettings() {
         defaultWorkingDirectory: "repo-root",
         maxOutputLines: 120,
         timeoutMs: 30000,
+      },
+      assist: {
+        enabled: true,
+        languageServer: {
+          enabled: true,
+          command: "verible-verilog-ls",
+          requestTimeoutMs: 1500,
+        },
+        lint: {
+          command: "verible-verilog-lint",
+        },
       },
       pythonPath: "python-custom",
       defaultSource: "configured.sv",
@@ -332,6 +362,17 @@ function testResolveCommandRequestUsesVsCodeSettings() {
         maxOutputLines: 120,
         timeoutMs: 30000,
       },
+      assist: {
+        enabled: true,
+        languageServer: {
+          enabled: true,
+          command: "verible-verilog-ls",
+          requestTimeoutMs: 1500,
+        },
+        lint: {
+          command: "verible-verilog-lint",
+        },
+      },
       pythonPath: "python-custom",
       defaultSource: "configured.sv",
       defaultLog: "configured.log",
@@ -361,6 +402,17 @@ function testResolveCommandRequestUsesVsCodeSettings() {
         maxOutputLines: 120,
         timeoutMs: 30000,
       },
+      assist: {
+        enabled: true,
+        languageServer: {
+          enabled: true,
+          command: "verible-verilog-ls",
+          requestTimeoutMs: 1500,
+        },
+        lint: {
+          command: "verible-verilog-lint",
+        },
+      },
       pythonPath: "python-custom",
       defaultSource: "explicit.sv",
       defaultLog: "configured.log",
@@ -375,13 +427,13 @@ async function testEntrypointExportsAndActivation() {
   assert.equal(typeof activate, "function");
   assert.equal(typeof deactivate, "function");
 
-  const registered = new Map();
+  const commandHandlers = new Map();
   const subscriptions = [];
   const outputLines = [];
   const vscodeApi = {
     commands: {
       registerCommand(commandId, handler) {
-        registered.set(commandId, handler);
+        commandHandlers.set(commandId, handler);
         return { dispose() {} };
       },
     },
@@ -413,20 +465,21 @@ async function testEntrypointExportsAndActivation() {
     },
   );
 
-  assert.deepEqual(activation.registered, COMMAND_IDS);
+  assert.deepEqual(activation.commandIds, COMMAND_IDS);
   assert.equal(activation.definitionProviders.length, 1);
   assert.equal(activation.definitionProviders[0].id, CHECKED_EXAMPLE_DEFINITION_PROVIDER_ID);
-  assert.equal(activation.definitionProviders[0].registered, false);
-  assert.equal(registered.size, COMMAND_IDS.length);
+  assert.equal(activation.definitionProviders[0].active, false);
+  assert.deepEqual(activation.assistProviders, []);
+  assert.equal(commandHandlers.size, COMMAND_IDS.length);
   assert.equal(subscriptions.length, COMMAND_IDS.length + 2);
 
-  const result = await registered.get("pccxSystemVerilog.showDiagnosticsExample")();
+  const result = await commandHandlers.get("pccxSystemVerilog.showDiagnosticsExample")();
   assert.equal(result.ok, true);
   assert.ok(outputLines.some((line) => line.includes("pccxSystemVerilog.showDiagnosticsExample")));
 }
 
 async function testCheckedExampleNavigationCommandReturnsLocations() {
-  const registered = new Map();
+  const commandHandlers = new Map();
   const quickPickCalls = [];
   const vscodeApi = {
     Uri: {
@@ -448,7 +501,7 @@ async function testCheckedExampleNavigationCommandReturnsLocations() {
     },
     commands: {
       registerCommand(commandId, handler) {
-        registered.set(commandId, handler);
+        commandHandlers.set(commandId, handler);
         return { dispose() {} };
       },
     },
@@ -491,7 +544,7 @@ async function testCheckedExampleNavigationCommandReturnsLocations() {
     },
   );
 
-  const result = await registered.get("pccxSystemVerilog.showCheckedExampleNavigation")();
+  const result = await commandHandlers.get("pccxSystemVerilog.showCheckedExampleNavigation")();
   assert.equal(result.ok, true);
   assert.equal(result.commandId, "pccxSystemVerilog.showCheckedExampleNavigation");
   assert.equal(result.action.kind, "navigation");
@@ -506,7 +559,7 @@ async function testCheckedExampleNavigationCommandReturnsLocations() {
 }
 
 async function testLiveWorkspaceNavigationCommandReturnsLocationsWithoutQuickPick() {
-  const registered = new Map();
+  const commandHandlers = new Map();
   const quickPickCalls = [];
   const settings = new Map([
     ["mode", "liveWorkspace"],
@@ -546,7 +599,7 @@ async function testLiveWorkspaceNavigationCommandReturnsLocationsWithoutQuickPic
     },
     commands: {
       registerCommand(commandId, handler) {
-        registered.set(commandId, handler);
+        commandHandlers.set(commandId, handler);
         return { dispose() {} };
       },
     },
@@ -601,7 +654,7 @@ async function testLiveWorkspaceNavigationCommandReturnsLocationsWithoutQuickPic
     },
   );
 
-  const result = await registered.get(LIVE_WORKSPACE_NAVIGATION_COMMAND)();
+  const result = await commandHandlers.get(LIVE_WORKSPACE_NAVIGATION_COMMAND)();
 
   assert.equal(result.ok, true);
   assert.equal(result.commandId, LIVE_WORKSPACE_NAVIGATION_COMMAND);
@@ -649,7 +702,7 @@ async function testCheckedExampleDefinitionProviderReturnsLocations() {
 }
 
 async function testActivationRegistersCheckedExampleDefinitionProvider() {
-  const registered = new Map();
+  const commandHandlers = new Map();
   const subscriptions = [];
   const definitionRegistrations = [];
   const facadeCalls = [];
@@ -673,7 +726,7 @@ async function testActivationRegistersCheckedExampleDefinitionProvider() {
     },
     commands: {
       registerCommand(commandId, handler) {
-        registered.set(commandId, handler);
+        commandHandlers.set(commandId, handler);
         return { dispose() {} };
       },
     },
@@ -719,15 +772,21 @@ async function testActivationRegistersCheckedExampleDefinitionProvider() {
     },
   );
 
-  assert.deepEqual(activation.registered, COMMAND_IDS);
+  assert.deepEqual(activation.commandIds, COMMAND_IDS);
   assert.deepEqual(activation.definitionProviders, [
     {
       id: CHECKED_EXAMPLE_DEFINITION_PROVIDER_ID,
       selector: CHECKED_EXAMPLE_DEFINITION_SELECTOR,
-      registered: true,
+      active: true,
     },
   ]);
-  assert.equal(definitionRegistrations.length, 1);
+  assert.deepEqual(activation.assistProviders, [
+    {
+      id: "systemverilog-lsp-definition",
+      active: true,
+    },
+  ]);
+  assert.equal(definitionRegistrations.length, 2);
   assert.equal(definitionRegistrations[0].selector, CHECKED_EXAMPLE_DEFINITION_SELECTOR);
   assert.ok(
     CHECKED_EXAMPLE_DEFINITION_SELECTOR.some((selector) => selector.language === "systemverilog"),
@@ -735,7 +794,7 @@ async function testActivationRegistersCheckedExampleDefinitionProvider() {
   assert.ok(
     CHECKED_EXAMPLE_DEFINITION_SELECTOR.some((selector) => selector.pattern === "**/*.sv"),
   );
-  assert.equal(subscriptions.length, COMMAND_IDS.length + 3);
+  assert.equal(subscriptions.length, COMMAND_IDS.length + 4);
 
   const definitions = await definitionRegistrations[0].provider.provideDefinition(
     { uri: { fsPath: "/workspace/smoke.sv" } },
@@ -762,7 +821,7 @@ async function testActivationRegistersCheckedExampleDefinitionProvider() {
 
 async function testNoVsCodeRuntimeIsANoop() {
   const activation = await activate({ subscriptions: [] }, { commands: null });
-  assert.deepEqual(activation.registered, []);
+  assert.deepEqual(activation.commandIds, []);
 }
 
 async function testCommandHandlerCanBeUsedWithoutRealVsCode() {
@@ -781,6 +840,121 @@ async function testCommandHandlerCanBeUsedWithoutRealVsCode() {
 
   const result = await handler();
   assert.equal(result.ok, true);
+}
+
+async function testAssistStatusCommandReturnsCitationCounts() {
+  const handler = createCommandHandler(SHOW_ASSIST_STATUS_COMMAND, null, {});
+
+  const result = await handler();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.commandId, SHOW_ASSIST_STATUS_COMMAND);
+  assert.equal(result.kind, "systemverilog-assist-status");
+  assert.equal(result.languageServer.command, "verible-verilog-ls");
+  assert.equal(result.languageServer.transport, "stdio-json-rpc");
+  assert.equal(result.completions.snippetCount, 20);
+  assert.ok(result.completions.keywordCount >= 200);
+  assert.ok(result.citations.uniqueCitationCount >= 20);
+  assert.equal(result.demoPlan.executesSimulation, false);
+  assert.equal(result.demoPlan.writesRtl, false);
+}
+
+async function testVeribleLintCommandPublishesDiagnosticsFromFixedInvocation() {
+  const collections = [];
+  const messages = [];
+  const vscodeApi = {
+    Uri: {
+      file(file) {
+        return { fsPath: file };
+      },
+    },
+    DiagnosticSeverity: {
+      Error: "Error",
+      Warning: "Warning",
+      Information: "Information",
+    },
+    Range: class Range {
+      constructor(startLine, startCharacter, endLine, endCharacter) {
+        this.start = { line: startLine, character: startCharacter };
+        this.end = { line: endLine, character: endCharacter };
+      }
+    },
+    Diagnostic: class Diagnostic {
+      constructor(range, message, severity) {
+        this.range = range;
+        this.message = message;
+        this.severity = severity;
+      }
+    },
+    window: {
+      showInformationMessage(...args) {
+        messages.push(args);
+      },
+      showWarningMessage(...args) {
+        messages.push(args);
+      },
+    },
+  };
+  const handler = createCommandHandler(
+    RUN_VERIBLE_LINT_DIAGNOSTICS_COMMAND,
+    vscodeApi,
+    {
+      diagnosticsCollection: {
+        set(uri, diagnostics) {
+          collections.push({ uri, diagnostics });
+        },
+      },
+      veribleLintExecFile(executable, args, _options, callback) {
+        assert.equal(executable, "verible-verilog-lint");
+        assert.deepEqual(args, [
+          "--lint_fatal=false",
+          "--parse_fatal=false",
+          "--rules_config_search",
+          "/repo/top.sv",
+        ]);
+        callback({ code: 1 }, "", "/repo/top.sv:2:5: style finding [line-length]\n");
+      },
+    },
+  );
+
+  const result = await handler({ fsPath: "/repo/top.sv" });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.commandId, RUN_VERIBLE_LINT_DIAGNOSTICS_COMMAND);
+  assert.equal(result.kind, "verible-lint-diagnostics");
+  assert.equal(result.shell, false);
+  assert.equal(result.diagnosticCount, 1);
+  assert.equal(collections.length, 1);
+  assert.equal(collections[0].uri.fsPath, "/repo/top.sv");
+  assert.equal(collections[0].diagnostics[0].range.start.line, 1);
+  assert.ok(messages.some(([message]) => /Verible lint diagnostics: 1/.test(message)));
+}
+
+async function testPrepareSimulationHandoffIsDataOnly() {
+  const handler = createCommandHandler(
+    PREPARE_SIMULATION_HANDOFF_COMMAND,
+    {
+      workspace: {
+        workspaceFolders: [{ uri: { fsPath: "/repo" } }],
+      },
+      window: {
+        showInformationMessage() {},
+      },
+    },
+    {},
+  );
+
+  const result = await handler({ fsPath: "/repo/tb/top_tb.sv" });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.commandId, PREPARE_SIMULATION_HANDOFF_COMMAND);
+  assert.equal(result.kind, "systemverilog-simulation-handoff");
+  assert.equal(result.status, "ready");
+  assert.equal(result.selectedFile, "/repo/tb/top_tb.sv");
+  assert.equal(result.executesSimulation, false);
+  assert.equal(result.requiresUserApproval, true);
+  assert.equal(result.writesRtl, false);
+  assert.equal(result.pccxNpuSelfContained, true);
 }
 
 async function testWorkflowStatusCommandReturnsDisabledBackendNone() {
@@ -1563,6 +1737,9 @@ await testCheckedExampleDefinitionProviderReturnsLocations();
 await testActivationRegistersCheckedExampleDefinitionProvider();
 await testNoVsCodeRuntimeIsANoop();
 await testCommandHandlerCanBeUsedWithoutRealVsCode();
+await testAssistStatusCommandReturnsCitationCounts();
+await testVeribleLintCommandPublishesDiagnosticsFromFixedInvocation();
+await testPrepareSimulationHandoffIsDataOnly();
 await testWorkflowStatusCommandReturnsDisabledBackendNone();
 await testWorkflowContextBundleCommandUsesActiveEditorSelectionAndDiagnostics();
 await testValidationProposalCommandReturnsDataOnly();

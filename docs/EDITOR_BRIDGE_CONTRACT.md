@@ -118,7 +118,8 @@ known flows only.
 The VS Code prototype is the editor cockpit over this contract.  It owns
 command registration, presentation mapping, and the opt-in live workspace
 command boundary.  It is not a second analysis backend, does not
-duplicate pccx-lab internals, and does not implement LSP.  pccx-lab
+duplicate pccx-lab internals, and does not implement a language server.
+pccx-lab
 remains the CLI-first verification/tooling backend for reusable analysis
 and validation behavior.
 
@@ -151,8 +152,9 @@ claim.  When explicitly enabled, it opens the controlled
 live diagnostics and live navigation only against that tiny fixture path.
 Live navigation verifies `live_top` through the explicit live workspace
 opt-in command path without falling back to checked examples.
-The scaffold is not published, has no marketplace packaging, has no LSP,
-and is not a stable ABI/API.  Current coverage is mostly static/mock
+The scaffold is not published, has no marketplace packaging, has a
+pre-stable stdio language-server adapter, and is not a stable ABI/API.
+Current coverage is mostly static/mock
 tests and smoke tests; CI does not run the real Extension Host runtime
 smoke yet.
 The prototype documents the 1-based CLI position to 0-based editor
@@ -303,8 +305,8 @@ For existing xsim logs, the VS Code prototype can consume the checked
 summary carries problem counts by severity, located/unlocated counts,
 relative file counts, and safety flags.  It does not read raw logs in
 the UI layer, echo raw log lines into context bundles, run xsim or
-Vivado, invoke pccx-lab or the launcher, touch hardware, or implement
-MCP/LSP.  The surface is documented in
+Vivado, invoke pccx-lab or the launcher, touch hardware, implement an
+MCP server, or bundle a language server.  The surface is documented in
 `editors/vscode-prototype/docs/xsim-diagnostics-status-surface.md`.
 The planning boundary for the shared diagnostic schema draft, read-only
 xsim path, and text surface sketches is documented in
@@ -320,7 +322,8 @@ xsim path, and text surface sketches is documented in
   metadata over those
   surfaces. They are not semantic elaboration and do not apply refactors or
   execute validation.
-- No LSP server in this repository today.
+- No bundled language server in this repository today; the VS Code
+  scaffold can call a local `verible-verilog-ls` command over stdio.
 - No published editor extension or marketplace packaging is implemented
   here.
 - No VS Code GUI integration test in this repository today.

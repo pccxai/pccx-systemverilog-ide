@@ -14,6 +14,11 @@ export const CONFIG_KEYS = Object.freeze([
   "validationRunner.defaultWorkingDirectory",
   "validationRunner.maxOutputLines",
   "validationRunner.timeoutMs",
+  "assist.enabled",
+  "assist.languageServer.enabled",
+  "assist.languageServer.command",
+  "assist.languageServer.requestTimeoutMs",
+  "assist.lint.command",
   "pythonPath",
   "defaultSource",
   "defaultLog",
@@ -56,11 +61,18 @@ export const DIAGNOSTICS_HANDOFF_COMMAND_IDS = Object.freeze([
   "pccxSystemVerilog.showDiagnosticsHandoffSummary",
 ]);
 
+export const ASSIST_COMMAND_IDS = Object.freeze([
+  "pccxSystemVerilog.showAssistStatus",
+  "pccxSystemVerilog.runVeribleLintDiagnostics",
+  "pccxSystemVerilog.prepareSimulationHandoff",
+]);
+
 export const COMMAND_IDS = Object.freeze([
   ...FACADE_COMMAND_IDS,
   ...WORKFLOW_COMMAND_IDS,
   ...PCCX_LAB_COMMAND_IDS,
   ...DIAGNOSTICS_HANDOFF_COMMAND_IDS,
+  ...ASSIST_COMMAND_IDS,
 ]);
 
 export const MODES = Object.freeze(["checkedExample", "liveWorkspace"]);
@@ -93,6 +105,17 @@ const DEFAULT_CONFIG = Object.freeze({
     defaultWorkingDirectory: "repo-root",
     maxOutputLines: 120,
     timeoutMs: 30000,
+  }),
+  assist: Object.freeze({
+    enabled: true,
+    languageServer: Object.freeze({
+      enabled: true,
+      command: "verible-verilog-ls",
+      requestTimeoutMs: 1500,
+    }),
+    lint: Object.freeze({
+      command: "verible-verilog-lint",
+    }),
   }),
   pythonPath: "python3",
   defaultSource: "fixtures/missing_endmodule.sv",
@@ -192,6 +215,11 @@ export function defaultConfig() {
     pccxLab: { ...DEFAULT_CONFIG.pccxLab },
     workflowBoundary: { ...DEFAULT_CONFIG.workflowBoundary },
     validationRunner: { ...DEFAULT_CONFIG.validationRunner },
+    assist: {
+      ...DEFAULT_CONFIG.assist,
+      languageServer: { ...DEFAULT_CONFIG.assist.languageServer },
+      lint: { ...DEFAULT_CONFIG.assist.lint },
+    },
   };
 }
 
@@ -251,6 +279,38 @@ export function normalizeConfig(rawConfig = {}) {
         DEFAULT_CONFIG.validationRunner.timeoutMs,
         { min: 1000, max: 120000 },
       ),
+    },
+    assist: {
+      enabled: booleanSetting(
+        rawConfig,
+        "assist.enabled",
+        DEFAULT_CONFIG.assist.enabled,
+      ),
+      languageServer: {
+        enabled: booleanSetting(
+          rawConfig,
+          "assist.languageServer.enabled",
+          DEFAULT_CONFIG.assist.languageServer.enabled,
+        ),
+        command: commandSetting(
+          rawConfig,
+          "assist.languageServer.command",
+          DEFAULT_CONFIG.assist.languageServer.command,
+        ),
+        requestTimeoutMs: integerSetting(
+          rawConfig,
+          "assist.languageServer.requestTimeoutMs",
+          DEFAULT_CONFIG.assist.languageServer.requestTimeoutMs,
+          { min: 250, max: 30000 },
+        ),
+      },
+      lint: {
+        command: commandSetting(
+          rawConfig,
+          "assist.lint.command",
+          DEFAULT_CONFIG.assist.lint.command,
+        ),
+      },
     },
     pythonPath: stringSetting(rawConfig, "pythonPath", DEFAULT_CONFIG.pythonPath),
     defaultSource: stringSetting(rawConfig, "defaultSource", DEFAULT_CONFIG.defaultSource),

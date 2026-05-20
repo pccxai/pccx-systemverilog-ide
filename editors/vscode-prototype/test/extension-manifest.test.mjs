@@ -31,6 +31,9 @@ const COMMAND_IDS = [
   "pccxSystemVerilog.showContextBundleAudit",
   "pccxSystemVerilog.showPccxLabBackendStatus",
   "pccxSystemVerilog.showDiagnosticsHandoffSummary",
+  "pccxSystemVerilog.showAssistStatus",
+  "pccxSystemVerilog.runVeribleLintDiagnostics",
+  "pccxSystemVerilog.prepareSimulationHandoff",
 ];
 
 async function readText(path) {
@@ -96,7 +99,11 @@ async function testCommandContributions() {
   assert.deepEqual(commandIds, COMMAND_IDS);
   assert.deepEqual(
     manifest.activationEvents,
-    COMMAND_IDS.map((commandId) => `onCommand:${commandId}`),
+    [
+      ...COMMAND_IDS.map((commandId) => `onCommand:${commandId}`),
+      "onLanguage:systemverilog",
+      "onLanguage:verilog",
+    ],
   );
   for (const commandId of COMMAND_IDS) {
     assert.ok(contributedCommands.has(commandId), `${commandId} missing from contributes.commands`);
@@ -108,6 +115,18 @@ async function testCommandContributions() {
   assert.equal(contributedCommands.size, COMMAND_IDS.length);
 }
 
+async function testSystemVerilogLanguageContributions() {
+  const manifest = await readPackageJson();
+  const languageIds = manifest.contributes?.languages?.map((language) => language.id);
+  const grammarLanguages = manifest.contributes?.grammars?.map((grammar) => grammar.language);
+  const snippets = manifest.contributes?.snippets ?? [];
+
+  assert.deepEqual(languageIds, ["systemverilog", "verilog"]);
+  assert.ok(grammarLanguages.includes("systemverilog"));
+  assert.ok(grammarLanguages.includes("verilog"));
+  assert.ok(snippets.some((entry) => entry.language === "systemverilog"));
+}
+
 async function testDocsKeepExperimentalScope() {
   const readme = await readText(resolve(EXTENSION_ROOT, "README.md"));
   const contract = await readText(resolve(ROOT, "docs/EDITOR_BRIDGE_CONTRACT.md"));
@@ -116,7 +135,10 @@ async function testDocsKeepExperimentalScope() {
   assert.match(combined, /experimental local VS Code extension scaffold/i);
   assert.match(combined, /not published/i);
   assert.match(combined, /no marketplace packaging/i);
-  assert.match(combined, /no LSP/i);
+  assert.match(combined, /stdio language-server adapter/i);
+  assert.match(combined, /verible-verilog-ls/i);
+  assert.match(combined, /verible-verilog-lint/i);
+  assert.match(combined, /20 UVM snippets/i);
   assert.match(combined, /not a stable ABI\/API/i);
   assert.match(combined, /static\/mock tests/i);
   assert.match(combined, /limited opt-in Extension Host runtime smoke/i);
@@ -146,6 +168,7 @@ async function testDocsKeepExperimentalScope() {
 await testPackageManifestShape();
 await testNoMarketplacePublishingShape();
 await testCommandContributions();
+await testSystemVerilogLanguageContributions();
 await testDocsKeepExperimentalScope();
 
 console.log("vscode extension manifest tests ok");

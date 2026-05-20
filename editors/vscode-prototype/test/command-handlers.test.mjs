@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 pccxai
+
 import assert from "node:assert/strict";
 
 import {
@@ -359,13 +362,13 @@ async function testExtensionExportsAndRegistration() {
   assert.equal(typeof activate, "function");
   assert.equal(typeof deactivate, "function");
 
-  const registered = [];
+  const commandIds = [];
   const activation = await activate(
     { subscriptions: [] },
     {
       commands: {
         registerCommand(commandId) {
-          registered.push(commandId);
+          commandIds.push(commandId);
           return { dispose() {} };
         },
       },
@@ -382,8 +385,8 @@ async function testExtensionExportsAndRegistration() {
     },
   );
 
-  assert.deepEqual(activation.registered, COMMAND_IDS);
-  assert.deepEqual(registered, COMMAND_IDS);
+  assert.deepEqual(activation.commandIds, COMMAND_IDS);
+  assert.deepEqual(commandIds, COMMAND_IDS);
 }
 
 testPlansForKnownCommands();
