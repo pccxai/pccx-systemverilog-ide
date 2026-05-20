@@ -34,7 +34,12 @@
     "onCommand:pccxSystemVerilog.showLocalWorkflowStatus",
     "onCommand:pccxSystemVerilog.showContextBundleAudit",
     "onCommand:pccxSystemVerilog.showPccxLabBackendStatus",
-    "onCommand:pccxSystemVerilog.showDiagnosticsHandoffSummary"
+    "onCommand:pccxSystemVerilog.showDiagnosticsHandoffSummary",
+    "onCommand:pccxSystemVerilog.showAssistStatus",
+    "onCommand:pccxSystemVerilog.runVeribleLintDiagnostics",
+    "onCommand:pccxSystemVerilog.prepareSimulationHandoff",
+    "onLanguage:systemverilog",
+    "onLanguage:verilog"
   ],
   "contributes": {
     "commands": [
@@ -125,6 +130,63 @@
       {
         "command": "pccxSystemVerilog.showDiagnosticsHandoffSummary",
         "title": "PCCX SystemVerilog: Show Diagnostics Handoff Summary (Experimental)"
+      },
+      {
+        "command": "pccxSystemVerilog.showAssistStatus",
+        "title": "PCCX SystemVerilog: Show Editor Assist Status (Experimental)"
+      },
+      {
+        "command": "pccxSystemVerilog.runVeribleLintDiagnostics",
+        "title": "PCCX SystemVerilog: Run Verible Lint Diagnostics (Experimental, Opt-In)"
+      },
+      {
+        "command": "pccxSystemVerilog.prepareSimulationHandoff",
+        "title": "PCCX SystemVerilog: Prepare Simulation Handoff (Experimental, No Execution)"
+      }
+    ],
+    "languages": [
+      {
+        "id": "systemverilog",
+        "aliases": [
+          "SystemVerilog",
+          "systemverilog"
+        ],
+        "extensions": [
+          ".sv",
+          ".svh",
+          ".sva"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "verilog",
+        "aliases": [
+          "Verilog",
+          "verilog"
+        ],
+        "extensions": [
+          ".v",
+          ".vh"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "systemverilog",
+        "scopeName": "source.systemverilog",
+        "path": "./syntaxes/systemverilog.tmLanguage.json"
+      },
+      {
+        "language": "verilog",
+        "scopeName": "source.verilog",
+        "path": "./syntaxes/systemverilog.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "systemverilog",
+        "path": "./snippets/systemverilog-uvm.code-snippets"
       }
     ],
     "configuration": {
@@ -200,6 +262,33 @@
           "minimum": 1000,
           "maximum": 120000,
           "description": "Experimental local prototype timeout in milliseconds for approved validation runner commands; not a stable API."
+        },
+        "pccxSystemVerilog.assist.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Experimental local prototype editor assist gate for keyword/snippet completion and language-server-backed requests; not a stable API."
+        },
+        "pccxSystemVerilog.assist.languageServer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Experimental local prototype stdio language-server gate for SystemVerilog hover, completion, definition, and diagnostics requests; not a stable API."
+        },
+        "pccxSystemVerilog.assist.languageServer.command": {
+          "type": "string",
+          "default": "verible-verilog-ls",
+          "description": "Experimental local prototype SystemVerilog language-server command. The command is invoked without a shell and without embedded arguments; not a stable API."
+        },
+        "pccxSystemVerilog.assist.languageServer.requestTimeoutMs": {
+          "type": "integer",
+          "default": 1500,
+          "minimum": 250,
+          "maximum": 30000,
+          "description": "Experimental local prototype timeout in milliseconds for stdio language-server requests; not a stable API."
+        },
+        "pccxSystemVerilog.assist.lint.command": {
+          "type": "string",
+          "default": "verible-verilog-lint",
+          "description": "Experimental local prototype lint command for explicit diagnostics. The command is invoked without a shell and without embedded arguments; not a stable API."
         },
         "pccxSystemVerilog.pythonPath": {
           "type": "string",

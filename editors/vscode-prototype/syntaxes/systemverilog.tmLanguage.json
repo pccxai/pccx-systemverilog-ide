@@ -1,0 +1,99 @@
+{
+  "name": "SystemVerilog",
+  "scopeName": "source.systemverilog",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#compilerDirectives" },
+    { "include": "#systemTasks" },
+    { "include": "#keywords" },
+    { "include": "#uvm" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.systemverilog",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.systemverilog",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.systemverilog",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.systemverilog",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.based.systemverilog",
+          "match": "\\b\\d*'[sS]?[dDhHoObB][0-9a-fA-F_xXzZ?]+\\b"
+        },
+        {
+          "name": "constant.numeric.decimal.systemverilog",
+          "match": "\\b\\d+(?:_\\d+)*\\b"
+        }
+      ]
+    },
+    "compilerDirectives": {
+      "patterns": [
+        {
+          "name": "keyword.control.directive.systemverilog",
+          "match": "`[A-Za-z_][A-Za-z0-9_$]*"
+        }
+      ]
+    },
+    "systemTasks": {
+      "patterns": [
+        {
+          "name": "support.function.system-task.systemverilog",
+          "match": "\\$[A-Za-z0-9_$]+"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.systemverilog",
+          "match": "\\b(?:always|always_comb|always_ff|always_latch|assign|begin|case|casex|casez|class|clocking|constraint|cover|covergroup|coverpoint|default|else|end|endcase|endclass|endclocking|endfunction|endgenerate|endgroup|endinterface|endmodule|endpackage|endprogram|endproperty|endsequence|endtask|extends|final|for|foreach|forever|fork|function|generate|if|initial|interface|join|join_any|join_none|module|package|program|property|repeat|sequence|task|while)\\b"
+        },
+        {
+          "name": "storage.type.systemverilog",
+          "match": "\\b(?:bit|byte|chandle|enum|event|int|integer|logic|longint|real|realtime|reg|shortint|shortreal|string|struct|time|typedef|union|var|void|wire)\\b"
+        },
+        {
+          "name": "storage.modifier.systemverilog",
+          "match": "\\b(?:automatic|const|extern|input|inout|local|localparam|output|packed|parameter|protected|rand|randc|ref|signed|static|type|unsigned|virtual)\\b"
+        }
+      ]
+    },
+    "uvm": {
+      "patterns": [
+        {
+          "name": "support.class.uvm.systemverilog",
+          "match": "\\buvm_[A-Za-z0-9_]+\\b"
+        },
+        {
+          "name": "support.macro.uvm.systemverilog",
+          "match": "`uvm_[A-Za-z0-9_]+"
+        }
+      ]
+    }
+  }
+}

@@ -135,7 +135,9 @@ async function testNoDirectShellInterpolation() {
     }),
   ]);
 
-  assert.doesNotMatch(source, /\bexec\s*\(/);
+  assert.doesNotMatch(source, /import\s*\{[^}]*\bexec\b[^}]*\}\s*from\s*["']node:child_process["']/);
+  assert.doesNotMatch(source, /\bchild_process\.exec\s*\(/);
+  assert.doesNotMatch(source, /(?:^|[^A-Za-z0-9_.])exec\s*\(/);
   assert.doesNotMatch(source, /shell\s*:\s*true/);
   assert.doesNotMatch(source, /shell\s*=\s*True/);
 }

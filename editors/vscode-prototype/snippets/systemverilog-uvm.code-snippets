@@ -1,0 +1,322 @@
+{
+  "uvm_test class": {
+    "prefix": "uvm_test",
+    "description": "IEEE 1800.2-2020 13.2 p.172: uvm_test skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 13.2 p.172: uvm_test base class.",
+      "class ${1:pccx_test} extends uvm_test;",
+      "  `uvm_component_utils(${1})",
+      "",
+      "  function new(string name = \"${1}\", uvm_component parent = null);",
+      "    super.new(name, parent);",
+      "  endfunction : new",
+      "",
+      "  task run_phase(uvm_phase phase);",
+      "    phase.raise_objection(this);",
+      "    ${0:// stimulus}",
+      "    phase.drop_objection(this);",
+      "  endtask : run_phase",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_env class": {
+    "prefix": "uvm_env",
+    "description": "IEEE 1800.2-2020 13.3 p.173: uvm_env skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 13.3 p.173: uvm_env base class.",
+      "class ${1:pccx_env} extends uvm_env;",
+      "  `uvm_component_utils(${1})",
+      "",
+      "  function new(string name = \"${1}\", uvm_component parent = null);",
+      "    super.new(name, parent);",
+      "  endfunction : new",
+      "",
+      "  function void build_phase(uvm_phase phase);",
+      "    super.build_phase(phase);",
+      "    ${0:// create child components}",
+      "  endfunction : build_phase",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_agent class": {
+    "prefix": "uvm_agent",
+    "description": "IEEE 1800.2-2020 13.4 p.173; UVM 1.2 User Guide 3.2 p.33.",
+    "body": [
+      "// IEEE 1800.2-2020 13.4 p.173; UVM 1.2 User Guide 3.2 p.33: reusable agent container.",
+      "class ${1:pccx_agent} extends uvm_agent;",
+      "  `uvm_component_utils(${1})",
+      "",
+      "  function new(string name = \"${1}\", uvm_component parent = null);",
+      "    super.new(name, parent);",
+      "  endfunction : new",
+      "",
+      "  function void build_phase(uvm_phase phase);",
+      "    super.build_phase(phase);",
+      "    ${0:// create sequencer, driver, monitor}",
+      "  endfunction : build_phase",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_driver class": {
+    "prefix": "uvm_driver",
+    "description": "IEEE 1800.2-2020 13.7 p.175; UVM 1.2 User Guide 3.3 p.34.",
+    "body": [
+      "// IEEE 1800.2-2020 13.7 p.175; UVM 1.2 User Guide 3.3 p.34: pull-mode driver.",
+      "class ${1:pccx_driver} extends uvm_driver #(${2:pccx_item});",
+      "  `uvm_component_utils(${1})",
+      "",
+      "  function new(string name = \"${1}\", uvm_component parent = null);",
+      "    super.new(name, parent);",
+      "  endfunction : new",
+      "",
+      "  task run_phase(uvm_phase phase);",
+      "    forever begin",
+      "      ${2} req;",
+      "      seq_item_port.get_next_item(req);",
+      "      ${0:// drive req}",
+      "      seq_item_port.item_done();",
+      "    end",
+      "  endtask : run_phase",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_monitor class": {
+    "prefix": "uvm_monitor",
+    "description": "IEEE 1800.2-2020 13.5 p.174: uvm_monitor skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 13.5 p.174: monitor base class.",
+      "class ${1:pccx_monitor} extends uvm_monitor;",
+      "  `uvm_component_utils(${1})",
+      "  uvm_analysis_port #(${2:pccx_item}) analysis_port;",
+      "",
+      "  function new(string name = \"${1}\", uvm_component parent = null);",
+      "    super.new(name, parent);",
+      "    analysis_port = new(\"analysis_port\", this);",
+      "  endfunction : new",
+      "",
+      "  task run_phase(uvm_phase phase);",
+      "    ${0:// sample interface and write transactions}",
+      "  endtask : run_phase",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_scoreboard class": {
+    "prefix": "uvm_scoreboard",
+    "description": "IEEE 1800.2-2020 13.6 p.174: uvm_scoreboard skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 13.6 p.174: scoreboard base class.",
+      "class ${1:pccx_scoreboard} extends uvm_scoreboard;",
+      "  `uvm_component_utils(${1})",
+      "  uvm_analysis_imp #(${2:pccx_item}, ${1}) item_imp;",
+      "",
+      "  function new(string name = \"${1}\", uvm_component parent = null);",
+      "    super.new(name, parent);",
+      "    item_imp = new(\"item_imp\", this);",
+      "  endfunction : new",
+      "",
+      "  function void write(${2} item);",
+      "    ${0:// compare item}",
+      "  endfunction : write",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_sequence_item class": {
+    "prefix": "uvm_sequence_item",
+    "description": "IEEE 1800.2-2020 14.1 p.177: sequence item skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 14.1 p.177: sequence item base class.",
+      "class ${1:pccx_item} extends uvm_sequence_item;",
+      "  rand bit [${2:31}:0] data;",
+      "  `uvm_object_utils_begin(${1})",
+      "    `uvm_field_int(data, UVM_DEFAULT)",
+      "  `uvm_object_utils_end",
+      "",
+      "  function new(string name = \"${1}\");",
+      "    super.new(name);",
+      "  endfunction : new",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_sequence class": {
+    "prefix": "uvm_sequence",
+    "description": "IEEE 1800.2-2020 14.3 p.189: sequence skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 14.3 p.189: sequence stream class.",
+      "class ${1:pccx_sequence} extends uvm_sequence #(${2:pccx_item});",
+      "  `uvm_object_utils(${1})",
+      "",
+      "  function new(string name = \"${1}\");",
+      "    super.new(name);",
+      "  endfunction : new",
+      "",
+      "  task body();",
+      "    ${2} req;",
+      "    req = ${2}::type_id::create(\"req\");",
+      "    start_item(req);",
+      "    ${0:// randomize or assign req}",
+      "    finish_item(req);",
+      "  endtask : body",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_sequencer class": {
+    "prefix": "uvm_sequencer",
+    "description": "IEEE 1800.2-2020 15.5 p.204: sequencer skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 15.5 p.204: sequencer class.",
+      "class ${1:pccx_sequencer} extends uvm_sequencer #(${2:pccx_item});",
+      "  `uvm_component_utils(${1})",
+      "",
+      "  function new(string name = \"${1}\", uvm_component parent = null);",
+      "    super.new(name, parent);",
+      "  endfunction : new",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_reg_block skeleton": {
+    "prefix": "uvm_reg_block",
+    "description": "IEEE 1800.2-2020 18.1 p.251; 18.2 p.263.",
+    "body": [
+      "// IEEE 1800.2-2020 18.1 p.251; 18.2 p.263: register block and map.",
+      "class ${1:pccx_reg_block} extends uvm_reg_block;",
+      "  `uvm_object_utils(${1})",
+      "  rand ${2:pccx_reg} ${3:ctrl};",
+      "  uvm_reg_map ${4:default_map};",
+      "",
+      "  function new(string name = \"${1}\");",
+      "    super.new(name, UVM_NO_COVERAGE);",
+      "  endfunction : new",
+      "",
+      "  virtual function void build();",
+      "    ${3} = ${2}::type_id::create(\"${3}\");",
+      "    ${3}.configure(this);",
+      "    ${3}.build();",
+      "    ${4} = create_map(\"${4}\", 'h0, ${5:4}, UVM_LITTLE_ENDIAN);",
+      "    ${4}.add_reg(${3}, 'h${6:0}, \"RW\");",
+      "    lock_model();",
+      "  endfunction : build",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_reg skeleton": {
+    "prefix": "uvm_reg",
+    "description": "IEEE 1800.2-2020 18.4 p.273: uvm_reg skeleton.",
+    "body": [
+      "// IEEE 1800.2-2020 18.4 p.273: register abstraction.",
+      "class ${1:pccx_reg} extends uvm_reg;",
+      "  `uvm_object_utils(${1})",
+      "  rand uvm_reg_field ${2:enable};",
+      "",
+      "  function new(string name = \"${1}\");",
+      "    super.new(name, ${3:32}, UVM_NO_COVERAGE);",
+      "  endfunction : new",
+      "",
+      "  virtual function void build();",
+      "    ${2} = uvm_reg_field::type_id::create(\"${2}\");",
+      "    ${2}.configure(this, ${4:1}, ${5:0}, \"RW\", 0, 'h0, 1, 1, 0);",
+      "  endfunction : build",
+      "endclass : ${1}"
+    ]
+  },
+  "uvm_reg_field configure": {
+    "prefix": "uvm_reg_field",
+    "description": "IEEE 1800.2-2020 18.5 p.290-291: uvm_reg_field configure.",
+    "body": [
+      "// IEEE 1800.2-2020 18.5 p.290-291: field configure arguments.",
+      "${1:field} = uvm_reg_field::type_id::create(\"${1}\");",
+      "${1}.configure(${2:parent_reg}, ${3:size}, ${4:lsb_pos}, \"${5:RW}\", ${6:0}, ${7:'h0}, ${8:1}, ${9:1}, ${0:0});"
+    ]
+  },
+  "UVM factory create": {
+    "prefix": "uvm_factory_create",
+    "description": "IEEE 1800.2-2020 8.3 p.75: type-based factory create.",
+    "body": [
+      "// IEEE 1800.2-2020 8.3 p.75: type-based factory create.",
+      "${1:pccx_item} ${2:item};",
+      "${2} = ${1}::type_id::create(\"${2}\"${0});"
+    ]
+  },
+  "UVM type override": {
+    "prefix": "uvm_factory_override",
+    "description": "IEEE 1800.2-2020 8.3.1.4 p.76: type override.",
+    "body": [
+      "// IEEE 1800.2-2020 8.3.1.4 p.76: type override.",
+      "${1:base_type}::type_id::set_type_override(${2:override_type}::get_type());",
+      "${0}"
+    ]
+  },
+  "UVM component utils fields": {
+    "prefix": "uvm_component_utils_fields",
+    "description": "IEEE 1800.2-2020 13.1 p.159; 8.3 p.75.",
+    "body": [
+      "// IEEE 1800.2-2020 13.1 p.159; 8.3 p.75: component macro plus field automation.",
+      "`uvm_component_utils_begin(${1:component_type})",
+      "  `uvm_field_int(${2:field_name}, UVM_DEFAULT)",
+      "`uvm_component_utils_end",
+      "${0}"
+    ]
+  },
+  "UVM object utils fields": {
+    "prefix": "uvm_object_utils_fields",
+    "description": "IEEE 1800.2-2020 5.3 p.21; 8.3 p.75.",
+    "body": [
+      "// IEEE 1800.2-2020 5.3 p.21; 8.3 p.75: object macro plus field automation.",
+      "`uvm_object_utils_begin(${1:object_type})",
+      "  `uvm_field_int(${2:field_name}, UVM_DEFAULT)",
+      "`uvm_object_utils_end",
+      "${0}"
+    ]
+  },
+  "UVM TLM analysis port and imp": {
+    "prefix": "uvm_tlm_analysis",
+    "description": "IEEE 1800.2-2020 12.2 p.120-121; 13.9 p.177.",
+    "body": [
+      "// IEEE 1800.2-2020 12.2 p.120-121; 13.9 p.177: nonblocking analysis flow.",
+      "uvm_analysis_port #(${1:pccx_item}) ${2:analysis_port};",
+      "uvm_analysis_imp #(${1}, ${3:pccx_scoreboard}) ${4:item_imp};",
+      "${0}"
+    ]
+  },
+  "UVM TLM FIFO": {
+    "prefix": "uvm_tlm_fifo",
+    "description": "IEEE 1800.2-2020 12 p.120; Annex B.5 p.387.",
+    "body": [
+      "// IEEE 1800.2-2020 12 p.120; Annex B.5 p.387: TLM FIFO connection pattern.",
+      "uvm_tlm_analysis_fifo #(${1:pccx_item}) ${2:item_fifo};",
+      "${2} = new(\"${2}\", this);",
+      "${3:producer}.analysis_port.connect(${2}.analysis_export);",
+      "${0}"
+    ]
+  },
+  "UVM phase callbacks": {
+    "prefix": "uvm_phase_callbacks",
+    "description": "IEEE 1800.2-2020 9.6 p.92; 13.1 p.159.",
+    "body": [
+      "// IEEE 1800.2-2020 9.6 p.92; 13.1 p.159: component phase callbacks.",
+      "function void build_phase(uvm_phase phase);",
+      "  super.build_phase(phase);",
+      "  ${1:// build}",
+      "endfunction : build_phase",
+      "",
+      "function void connect_phase(uvm_phase phase);",
+      "  super.connect_phase(phase);",
+      "  ${2:// connect}",
+      "endfunction : connect_phase",
+      "",
+      "task run_phase(uvm_phase phase);",
+      "  phase.raise_objection(this);",
+      "  ${0:// run}",
+      "  phase.drop_objection(this);",
+      "endtask : run_phase"
+    ]
+  },
+  "Driver to sequencer connect": {
+    "prefix": "uvm_driver_sequencer_connect",
+    "description": "IEEE 1800.2-2020 13.7 p.175; 15.5 p.204; UVM 1.2 User Guide 3.5 p.35.",
+    "body": [
+      "// IEEE 1800.2-2020 13.7 p.175; 15.5 p.204; UVM 1.2 User Guide 3.5 p.35.",
+      "${1:driver}.seq_item_port.connect(${2:sequencer}.seq_item_export);",
+      "${0}"
+    ]
+  }
+}

@@ -45,6 +45,9 @@ node editors/vscode-prototype/test/validation-result-summary.test.mjs
 node editors/vscode-prototype/test/validation-result-cache.test.mjs
 node editors/vscode-prototype/test/approved-validation-runner.test.mjs
 node editors/vscode-prototype/test/static-boundary.test.mjs
+node editors/vscode-prototype/test/sv-assist-data.test.mjs
+node editors/vscode-prototype/test/verible-language-server.test.mjs
+node editors/vscode-prototype/test/verible-lint.test.mjs
 node editors/vscode-prototype/test/extension-entrypoint.test.mjs
 node editors/vscode-prototype/test/command-handlers.test.mjs
 node editors/vscode-prototype/test/presenter.test.mjs

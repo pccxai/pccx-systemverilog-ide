@@ -5,7 +5,8 @@ pre-stable editor bridge JSON into VS Code-style data records and for
 hosting a minimal local VS Code extension package scaffold.
 
 The extension scaffold is not published, has no marketplace packaging,
-has no LSP, and does not define a stable ABI/API.  It can consume the checked
+has a pre-stable stdio language-server adapter, and does not define a
+stable ABI/API.  It can consume the checked
 examples under `docs/examples/editor-bridge` and can also run limited
 live JSON flows from this source tree through the local command facade.
 The default tests are mostly static/mock tests, not VS Code GUI
@@ -147,6 +148,9 @@ The contributed commands are:
 - `pccxSystemVerilog.showContextBundleAudit`
 - `pccxSystemVerilog.showPccxLabBackendStatus`
 - `pccxSystemVerilog.showDiagnosticsHandoffSummary`
+- `pccxSystemVerilog.showAssistStatus`
+- `pccxSystemVerilog.runVeribleLintDiagnostics`
+- `pccxSystemVerilog.prepareSimulationHandoff`
 
 The prototype-only settings are:
 
@@ -160,6 +164,11 @@ The prototype-only settings are:
 - `pccxSystemVerilog.validationRunner.defaultWorkingDirectory`, default `repo-root`
 - `pccxSystemVerilog.validationRunner.maxOutputLines`, default `120`
 - `pccxSystemVerilog.validationRunner.timeoutMs`, default `30000`
+- `pccxSystemVerilog.assist.enabled`, default `true`
+- `pccxSystemVerilog.assist.languageServer.enabled`, default `true`
+- `pccxSystemVerilog.assist.languageServer.command`, default `verible-verilog-ls`
+- `pccxSystemVerilog.assist.languageServer.requestTimeoutMs`, default `1500`
+- `pccxSystemVerilog.assist.lint.command`, default `verible-verilog-lint`
 - `pccxSystemVerilog.pythonPath`, default `python3`
 - `pccxSystemVerilog.defaultSource`, default `fixtures/missing_endmodule.sv`
 - `pccxSystemVerilog.defaultLog`, default `fixtures/xsim/mixed.log`
@@ -176,7 +185,7 @@ command-first navigation, and always uses
 `navigation --mode example --source declarations` through the facade
 boundary.  It maps the checked declaration records into VS Code
 `Uri`/`Range`/`Location`-style records and returns them to callers; it
-has no LSP provider yet.  The explicit example commands always build
+now coexists with the pre-stable stdio language-server adapter.  The explicit example commands always build
 checked-example facade arguments, and the explicit live commands always
 build known live facade arguments.  Live diagnostics uses
 `--from-check <defaultSource>`.  Live navigation uses
@@ -191,6 +200,35 @@ directly from the extension entry point, do not invoke raw shell command
 strings, and do not accept arbitrary command execution.  Live mode calls
 only known facade flows.  Live paths are still prototype-only and are
 passed to known facade flows as argument-array entries.
+
+## SystemVerilog Assist Phase 1
+
+The Phase 1 editor assist surface adds a small local stdio
+language-server adapter for `verible-verilog-ls`.  It keeps the extension
+dependency-free: no `vscode-languageclient` package, no bundler, no
+marketplace workflow, and no shell interpolation.  The adapter sends
+JSON-RPC over stdio and is used for hover, completion, definition, and
+publish-diagnostics messages when the command is present on the local
+machine.
+
+The local completion layer also contributes SystemVerilog keywords,
+20 UVM snippets, a lightweight TextMate grammar, and static hover facts.
+The keyword list is anchored to IEEE 1800-2023 Clause 5.6 and Annex B.
+The UVM snippets are anchored to IEEE 1800.2-2020 Clauses 8, 9, 12, 13,
+14, 15, 18, and 19 plus the UVM 1.2 guide's transaction-level component
+chapter.  Snippet bodies carry one-line page citation comments; they are
+PCCX-authored skeletons, not copied standards text.
+
+`pccxSystemVerilog.runVeribleLintDiagnostics` is an explicit command
+that invokes `verible-verilog-lint` with fixed arguments and publishes
+the parsed diagnostics into the VS Code diagnostic collection.  It does
+not run continuously, does not watch files, and does not invoke arbitrary
+commands.
+
+`pccxSystemVerilog.prepareSimulationHandoff` creates a data-only local
+simulation handoff descriptor for the validation boundary.  It does not
+execute a simulator, write RTL, touch hardware, or bypass the existing
+approved validation runner gate.
 
 `pccxSystemVerilog.showPccxLabBackendStatus` prepares a command palette
 status surface for future pccx-lab integration.  It returns the configured
@@ -311,7 +349,7 @@ proposal, disabled approved validation runner behavior, one explicit
 allowlisted validation run, validation summary handoff into the context
 bundle, local validation-result cache commands, and pccx-lab
 backend status command without provider/runtime calls.  It does not
-package the extension, add an LSP provider, or install through a
+package the extension, bundle a language server, or install through a
 marketplace flow.  Extension Host gates are
 tracked in
 [`docs/EXTENSION_HOST_READINESS.md`](./docs/EXTENSION_HOST_READINESS.md).
@@ -370,7 +408,7 @@ It rejects private paths, secret-like assignments, shell commands,
 build artifacts, model files, raw provider output, unknown command
 fields, and auto-apply flags.  It does not apply patches, write files,
 execute validation, call pccx-lab, call pccx-launcher, call provider/runtime services
-provider, implement MCP, implement LSP, package the extension, create a
+provider, implement an MCP server, bundle a language server, package the extension, create a
 release, or create a tag.  The contract notes are tracked in
 [`docs/patch-proposal-contract.md`](./docs/patch-proposal-contract.md).
 `pccxSystemVerilog.showPatchProposalPreview` previews checked patch
@@ -409,7 +447,7 @@ device.  The boundary notes are tracked in
 gate, validation runner state, recent validation cache status, pccx-lab
 descriptor state, launcher fixture state, and a bounded context item count.
 It uses local/fixture data only and does not execute pccx-lab, call the
-launcher, call providers, implement MCP, implement LSP, or package the
+launcher, call providers, implement an MCP server, bundle a language server, or package the
 extension.
 
 `src/context-bundle-audit.mjs` reports approximate context bundle size,
@@ -436,7 +474,7 @@ existing proposal allowlist, and returns bounded JSON/text explaining
 whether the proposal is eligible for the existing approved runner path.
 It checks for missing or unknown IDs, malformed command shape, raw shell
 strings, launcher commands, pccx-lab commands, pccx-lab diagnostics
-handoff validator invocation, provider/runtime/KV260/MCP/LSP/marketplace
+handoff validator invocation, provider/runtime/KV260/MCP server/language-server/marketplace
 execution wording, and diagnostics handoff data appearing as execution
 input.  The audit does not execute commands and does not broaden the
 runner allowlist.
@@ -469,7 +507,7 @@ shows the small recent cache through VS Code-native surfaces, and
 max size, latest status, and redaction/truncation flags through a
 summary-only validation output channel.
 `pccxSystemVerilog.clearValidationResultCache` clears the in-memory cache.
-This cache boundary does not add provider/runtime calls, MCP, LSP, marketplace
+This cache boundary does not add provider/runtime calls, MCP server, bundled language-server, marketplace
 packaging, pccx-launcher calls, real pccx-lab execution, releases, or
 tags.
 
@@ -487,8 +525,9 @@ VS Code, Xcode, and JetBrains are future presentation preset families,
 not implemented skins and not completion claims.  This is not a completed
 custom theme system, and the current work is not a custom theme engine.
 
-This scaffold is not LSP, not a full IDE replacement, not a stable
-ABI/API, and has no marketplace packaging or published extension.
+This scaffold has only a pre-stable client-side language-server adapter,
+is not a full IDE replacement, is not a stable ABI/API, and has no
+marketplace packaging or published extension.
 CI does not run the real Extension Host runtime smoke yet.
 
 ## Daily-Driver Roadmap
@@ -565,6 +604,9 @@ node editors/vscode-prototype/test/validation-result-summary.test.mjs
 node editors/vscode-prototype/test/validation-result-cache.test.mjs
 node editors/vscode-prototype/test/approved-validation-runner.test.mjs
 node editors/vscode-prototype/test/static-boundary.test.mjs
+node editors/vscode-prototype/test/sv-assist-data.test.mjs
+node editors/vscode-prototype/test/verible-language-server.test.mjs
+node editors/vscode-prototype/test/verible-lint.test.mjs
 node editors/vscode-prototype/test/extension-entrypoint.test.mjs
 node editors/vscode-prototype/test/command-handlers.test.mjs
 node editors/vscode-prototype/test/presenter.test.mjs

@@ -81,6 +81,9 @@ async function run() {
     "pccxSystemVerilog.showContextBundleAudit",
     "pccxSystemVerilog.showPccxLabBackendStatus",
     "pccxSystemVerilog.showDiagnosticsHandoffSummary",
+    "pccxSystemVerilog.showAssistStatus",
+    "pccxSystemVerilog.runVeribleLintDiagnostics",
+    "pccxSystemVerilog.prepareSimulationHandoff",
   ]);
 
   const manifest = readManifest();
@@ -96,18 +99,18 @@ async function run() {
   const developmentExtension = developmentExtensions[0];
   const activation = await developmentExtension.activate();
   assert.equal(developmentExtension.isActive, true);
-  assert.deepEqual(activation.registered, expectedCommandIds);
+  assert.deepEqual(activation.commandIds, expectedCommandIds);
   assert.ok(
     activation.definitionProviders.some((provider) => (
       provider.id === "pccxSystemVerilog.definitionProvider.checkedExample" &&
-      provider.registered === true
+      provider.active === true
     )),
-    "checked-example DefinitionProvider was not registered",
+    "checked-example DefinitionProvider was not active",
   );
 
   const commands = await vscode.commands.getCommands(true);
   for (const commandId of expectedCommandIds) {
-    assert.ok(commands.includes(commandId), `${commandId} is not registered`);
+    assert.ok(commands.includes(commandId), `${commandId} is missing`);
   }
 
   const disabledLiveWorkspaceResult = await vscode.commands.executeCommand(
@@ -593,6 +596,23 @@ async function run() {
   assert.equal(diagnosticsHandoffStatus.surface.safety.providerCalls, false);
   assert.equal(diagnosticsHandoffStatus.surface.safety.runtimeCalls, false);
   assert.equal(diagnosticsHandoffStatus.surface.safety.mcpCalls, false);
+
+  const assistStatus = await vscode.commands.executeCommand(
+    "pccxSystemVerilog.showAssistStatus",
+  );
+  assert.equal(assistStatus.ok, true);
+  assert.equal(assistStatus.kind, "systemverilog-assist-status");
+  assert.equal(assistStatus.completions.snippetCount, 20);
+  assert.equal(assistStatus.languageServer.command, "verible-verilog-ls");
+
+  const simulationHandoff = await vscode.commands.executeCommand(
+    "pccxSystemVerilog.prepareSimulationHandoff",
+    vscode.Uri.file(path.join(workspaceRoot, "top.sv")),
+  );
+  assert.equal(simulationHandoff.ok, true);
+  assert.equal(simulationHandoff.kind, "systemverilog-simulation-handoff");
+  assert.equal(simulationHandoff.executesSimulation, false);
+  assert.equal(simulationHandoff.writesRtl, false);
   assert.equal(diagnosticsHandoffStatus.surface.safety.lspImplemented, false);
 
   const extensionModule = await importExtensionEntrypoint();

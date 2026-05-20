@@ -72,6 +72,16 @@ import {
   createDiagnosticsHandoffStatusSurface,
   formatDiagnosticsHandoffStatusSurface,
 } from "./diagnostics-handoff-status-surface.mjs";
+import {
+  createAssistStatus,
+  registerSystemVerilogAssist,
+} from "./sv-assist-provider.mjs";
+import {
+  runVeribleLint,
+} from "./verible-lint.mjs";
+import {
+  createSimulationHandoff,
+} from "./simulation-handoff.mjs";
 
 const EXTENSION_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_DIAGNOSTIC_FILE_ROOT = resolve(EXTENSION_ROOT, "../..");
@@ -113,6 +123,12 @@ export const PCCX_LAB_BACKEND_STATUS_COMMAND =
   "pccxSystemVerilog.showPccxLabBackendStatus";
 export const SHOW_DIAGNOSTICS_HANDOFF_SUMMARY_COMMAND =
   "pccxSystemVerilog.showDiagnosticsHandoffSummary";
+export const SHOW_ASSIST_STATUS_COMMAND =
+  "pccxSystemVerilog.showAssistStatus";
+export const RUN_VERIBLE_LINT_DIAGNOSTICS_COMMAND =
+  "pccxSystemVerilog.runVeribleLintDiagnostics";
+export const PREPARE_SIMULATION_HANDOFF_COMMAND =
+  "pccxSystemVerilog.prepareSimulationHandoff";
 
 const NAVIGATION_LOCATION_COMMAND_IDS = Object.freeze([
   CHECKED_EXAMPLE_NAVIGATION_COMMAND,
@@ -427,6 +443,35 @@ function appendCommandOutput(outputChannel, commandId, result) {
   }
   if (result.kind === "diagnostics-handoff-status") {
     outputChannel.appendLine(formatDiagnosticsHandoffStatusSurface(result.surface));
+  }
+  if (result.kind === "systemverilog-assist-status") {
+    outputChannel.appendLine(JSON.stringify({
+      kind: result.kind,
+      languageServer: result.languageServer,
+      lint: result.lint,
+      completions: result.completions,
+      citations: result.citations,
+    }, null, 2));
+  }
+  if (result.kind === "verible-lint-diagnostics") {
+    outputChannel.appendLine(JSON.stringify({
+      kind: result.kind,
+      file: result.file,
+      diagnosticCount: result.diagnosticCount,
+      exitCode: result.exitCode,
+      executable: result.executable,
+    }, null, 2));
+  }
+  if (result.kind === "systemverilog-simulation-handoff") {
+    outputChannel.appendLine(JSON.stringify({
+      kind: result.kind,
+      status: result.status,
+      selectedFile: result.selectedFile,
+      target: result.target,
+      executesSimulation: result.executesSimulation,
+      requiresUserApproval: result.requiresUserApproval,
+      writesRtl: result.writesRtl,
+    }, null, 2));
   }
   if (result.status?.kind === "pccx-lab-backend-status") {
     outputChannel.appendLine(JSON.stringify(result.status, null, 2));
@@ -1106,6 +1151,80 @@ export function createCommandHandler(commandId, vscodeApi, runtime = {}) {
       return result;
     }
 
+    if (commandId === SHOW_ASSIST_STATUS_COMMAND) {
+      let result;
+      try {
+        const config = normalizeConfig(rawConfig);
+        result = {
+          ok: true,
+          commandId,
+          ...createAssistStatus(config, runtime),
+        };
+        vscodeApi?.window?.showInformationMessage?.(
+          `SystemVerilog assist: ${result.completions.keywordCount} keywords, ${result.completions.snippetCount} snippets.`,
+          result,
+        );
+      } catch (error) {
+        result = { ok: false, commandId, error: error.message };
+        vscodeApi?.window?.showWarningMessage?.(result.error, result);
+      }
+      appendCommandOutput(runtime.outputChannel, commandId, result);
+      return result;
+    }
+
+    if (commandId === RUN_VERIBLE_LINT_DIAGNOSTICS_COMMAND) {
+      let result;
+      try {
+        const config = normalizeConfig(rawConfig);
+        const file = pathFromCommandInput(input)
+          ?? vscodeApi?.window?.activeTextEditor?.document?.uri?.fsPath
+          ?? config.defaultSource;
+        result = await runVeribleLint(file, config.assist.lint, {
+          cwd: runtime.repoRoot ?? DEFAULT_DIAGNOSTIC_FILE_ROOT,
+          env: runtime.env,
+          execFile: runtime.veribleLintExecFile,
+          timeoutMs: config.validationRunner.timeoutMs,
+        });
+        result.commandId = commandId;
+        presentAction({
+          kind: "diagnostics",
+          summary: `${result.diagnosticCount} verible lint diagnostic(s)`,
+          diagnostics: result.diagnostics,
+        }, createPresenterDeps(vscodeApi, runtime));
+        vscodeApi?.window?.showInformationMessage?.(
+          `Verible lint diagnostics: ${result.diagnosticCount}.`,
+          result,
+        );
+      } catch (error) {
+        result = { ok: false, commandId, error: error.message };
+        vscodeApi?.window?.showWarningMessage?.(result.error, result);
+      }
+      appendCommandOutput(runtime.outputChannel, commandId, result);
+      return result;
+    }
+
+    if (commandId === PREPARE_SIMULATION_HANDOFF_COMMAND) {
+      let result;
+      try {
+        result = {
+          ok: true,
+          commandId,
+          ...createSimulationHandoff(input, vscodeApi, {
+            workspaceRoot: vscodeApi?.workspace?.workspaceFolders?.[0]?.uri?.fsPath ?? null,
+          }),
+        };
+        const message = result.status === "ready"
+          ? "Simulation handoff prepared for local validation boundary."
+          : `Simulation handoff blocked: ${result.blockedReason}`;
+        vscodeApi?.window?.showInformationMessage?.(message, result);
+      } catch (error) {
+        result = { ok: false, commandId, error: error.message };
+        vscodeApi?.window?.showWarningMessage?.(result.error, result);
+      }
+      appendCommandOutput(runtime.outputChannel, commandId, result);
+      return result;
+    }
+
     if (commandId === APPROVED_VALIDATION_RUNNER_COMMAND) {
       let result;
       try {
@@ -1205,7 +1324,7 @@ async function loadVscodeApi() {
 export async function activate(context, injectedVscodeApi = null, runtime = {}) {
   const vscodeApi = injectedVscodeApi ?? await loadVscodeApi();
   if (!vscodeApi?.commands?.registerCommand) {
-    return { registered: [] };
+    return { commandIds: [] };
   }
 
   const outputChannel = vscodeApi.window?.createOutputChannel?.(OUTPUT_CHANNEL_NAME);
@@ -1219,8 +1338,9 @@ export async function activate(context, injectedVscodeApi = null, runtime = {}) 
     outputChannel,
     validationOutputChannel,
   };
-  const registered = [];
+  const commandIds = [];
   const definitionProviders = [];
+  const assistProviders = [];
 
   for (const commandId of COMMAND_IDS) {
     const disposable = vscodeApi.commands.registerCommand(
@@ -1228,7 +1348,7 @@ export async function activate(context, injectedVscodeApi = null, runtime = {}) 
       createCommandHandler(commandId, vscodeApi, commandRuntime),
     );
     context?.subscriptions?.push?.(disposable);
-    registered.push(commandId);
+    commandIds.push(commandId);
   }
 
   definitionProviders.push(registerCheckedExampleDefinitionProvider(vscodeApi, context, {
@@ -1245,6 +1365,12 @@ export async function activate(context, injectedVscodeApi = null, runtime = {}) 
       });
     },
   }));
+  assistProviders.push(...registerSystemVerilogAssist(vscodeApi, context, {
+    ...commandRuntime,
+    readConfig() {
+      return normalizeConfig(readRawExtensionConfig(vscodeApi));
+    },
+  }));
 
   if (outputChannel) {
     context?.subscriptions?.push?.(outputChannel);
@@ -1255,7 +1381,7 @@ export async function activate(context, injectedVscodeApi = null, runtime = {}) 
   if (diagnosticsCollection && diagnosticsCollection !== runtime.diagnosticsCollection) {
     context?.subscriptions?.push?.(diagnosticsCollection);
   }
-  return { registered, definitionProviders };
+  return { commandIds, definitionProviders, assistProviders };
 }
 
 export function deactivate() {}

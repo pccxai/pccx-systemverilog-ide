@@ -131,15 +131,17 @@ checked-example symbols.  It executes
 `pccxSystemVerilog.showRecentValidationResults`,
 `pccxSystemVerilog.showValidationCacheStatus`,
 `pccxSystemVerilog.clearValidationResultCache`, and
-`pccxSystemVerilog.showPccxLabBackendStatus`, and
-`pccxSystemVerilog.showDiagnosticsHandoffSummary`, verifying
+`pccxSystemVerilog.showPccxLabBackendStatus`,
+`pccxSystemVerilog.showDiagnosticsHandoffSummary`,
+`pccxSystemVerilog.showAssistStatus`, and
+`pccxSystemVerilog.prepareSimulationHandoff`, verifying
 disabled/backend `none` status, proposal-only actions, validation
 proposal preflight audit data, disabled runner blocking behavior, one
 explicitly enabled allowlisted validation run, bounded active-file and
 selected-symbol context, bounded validation-result cache summary handoff,
-status-only pccx-lab boundary data, diagnostics handoff summary data, and
-no provider/runtime calls.  This is not LSP, and there is no LSP provider
-yet.
+status-only pccx-lab boundary data, diagnostics handoff summary data,
+pre-stable stdio language-server adapter status, data-only simulation
+handoff status, and no provider/runtime calls.
 
 ## Workflow Boundary
 

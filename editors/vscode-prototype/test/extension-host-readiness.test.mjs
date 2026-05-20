@@ -118,6 +118,9 @@ async function testReadinessDocsAndCiPolicy() {
   assert.match(`${readme}\n${readiness}`, /showContextBundleAudit/);
   assert.match(`${readme}\n${readiness}`, /showPccxLabBackendStatus/);
   assert.match(`${readme}\n${readiness}`, /showDiagnosticsHandoffSummary/);
+  assert.match(`${readme}\n${readiness}`, /showAssistStatus/);
+  assert.match(`${readme}\n${readiness}`, /runVeribleLintDiagnostics/);
+  assert.match(`${readme}\n${readiness}`, /prepareSimulationHandoff/);
   assert.match(`${readme}\n${readiness}`, /context bundle command/i);
   assert.match(`${readme}\n${readiness}`, /validation command proposal/i);
   assert.match(`${readme}\n${readiness}`, /validation proposal preflight audit/i);
@@ -128,7 +131,8 @@ async function testReadinessDocsAndCiPolicy() {
   assert.match(`${readme}\n${readiness}`, /pccx-lab backend status/i);
   assert.match(`${readme}\n${readiness}`, /workflow boundary .*boundary/i);
   assert.match(`${readme}\n${readiness}`, /pccx-launcher .*future local LLM\/chat backend/i);
-  assert.match(`${readme}\n${readiness}`, /no LSP provider/i);
+  assert.match(`${readme}\n${readiness}`, /stdio language-server adapter/i);
+  assert.match(`${readme}\n${readiness}`, /verible-verilog-ls/i);
   assert.match(`${readme}\n${readiness}`, /host theme first/i);
   assert.match(`${readme}\n${readiness}`, /not a completed\s+custom theme system/i);
   assert.doesNotMatch(ci, /vscode-extension-host-smoke\.sh/);

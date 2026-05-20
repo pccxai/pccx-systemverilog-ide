@@ -32,6 +32,11 @@ const REQUIRED_SETTINGS = new Map([
   ["pccxSystemVerilog.validationRunner.defaultWorkingDirectory", { type: "string", default: "repo-root" }],
   ["pccxSystemVerilog.validationRunner.maxOutputLines", { type: "integer", default: 120 }],
   ["pccxSystemVerilog.validationRunner.timeoutMs", { type: "integer", default: 30000 }],
+  ["pccxSystemVerilog.assist.enabled", { type: "boolean", default: true }],
+  ["pccxSystemVerilog.assist.languageServer.enabled", { type: "boolean", default: true }],
+  ["pccxSystemVerilog.assist.languageServer.command", { type: "string", default: "verible-verilog-ls" }],
+  ["pccxSystemVerilog.assist.languageServer.requestTimeoutMs", { type: "integer", default: 1500 }],
+  ["pccxSystemVerilog.assist.lint.command", { type: "string", default: "verible-verilog-lint" }],
   ["pccxSystemVerilog.pythonPath", { type: "string", default: "python3" }],
   ["pccxSystemVerilog.defaultSource", { type: "string", default: "fixtures/missing_endmodule.sv" }],
   ["pccxSystemVerilog.defaultLog", { type: "string", default: "fixtures/xsim/mixed.log" }],
@@ -108,6 +113,17 @@ function testDefaultConfig() {
       maxOutputLines: 120,
       timeoutMs: 30000,
     },
+    assist: {
+      enabled: true,
+      languageServer: {
+        enabled: true,
+        command: "verible-verilog-ls",
+        requestTimeoutMs: 1500,
+      },
+      lint: {
+        command: "verible-verilog-lint",
+      },
+    },
     pythonPath: "python3",
     defaultSource: "fixtures/missing_endmodule.sv",
     defaultLog: "fixtures/xsim/mixed.log",
@@ -153,6 +169,22 @@ function testNormalizeConfigRejectsInvalidSettings() {
   assert.throws(
     () => normalizeConfig({ validationRunner: { timeoutMs: 999 } }),
     /pccxSystemVerilog\.validationRunner\.timeoutMs must be between 1000 and 120000/,
+  );
+  assert.throws(
+    () => normalizeConfig({ assist: { enabled: "yes" } }),
+    /pccxSystemVerilog\.assist\.enabled must be a boolean/,
+  );
+  assert.throws(
+    () => normalizeConfig({ assist: { languageServer: { command: "verible-verilog-ls --stdio" } } }),
+    /pccxSystemVerilog\.assist\.languageServer\.command must be a command name or path without arguments/,
+  );
+  assert.throws(
+    () => normalizeConfig({ assist: { languageServer: { requestTimeoutMs: 249 } } }),
+    /pccxSystemVerilog\.assist\.languageServer\.requestTimeoutMs must be between 250 and 30000/,
+  );
+  assert.throws(
+    () => normalizeConfig({ assist: { lint: { command: "verible-verilog-lint --rules" } } }),
+    /pccxSystemVerilog\.assist\.lint\.command must be a command name or path without arguments/,
   );
   assert.throws(
     () => normalizeConfig({ defaultDeclarationKind: "class" }),
