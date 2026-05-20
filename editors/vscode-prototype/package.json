@@ -133,6 +133,11 @@
         "label": "pccx SystemVerilog Light",
         "uiTheme": "vs",
         "path": "./themes/pccx-systemverilog-light-color-theme.json"
+      },
+      {
+        "label": "pccx SystemVerilog Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/pccx-systemverilog-dark-color-theme.json"
       }
     ],
     "configuration": {

@@ -13,9 +13,9 @@ integration tests, and they run without npm install, Vivado, xsim, or
 hardware.  A limited opt-in Extension Host runtime smoke exists for local
 dependency-policy review; it is not a product claim.
 
-The package includes a copied pccx aperture-mark icon and a light
-`pccx SystemVerilog Light` color theme derived from the local
-`pccx-UI/Systemverilog-IDE` design-system package.  These assets are
+The package includes a copied pccx aperture-mark icon and
+`pccx SystemVerilog Light` / `pccx SystemVerilog Dark` color themes derived
+from the local `pccx-UI/Systemverilog-IDE` design-system package.  These assets are
 visual branding only; they do not replace the host-theme-first
 presentation boundary and do not make the theme surface complete.
 
@@ -158,9 +158,13 @@ The contributed commands are:
 - `pccxSystemVerilog.showPccxLabBackendStatus`
 - `pccxSystemVerilog.showDiagnosticsHandoffSummary`
 
-The contributed color theme is:
+The contributed color themes are:
 
 - `pccx SystemVerilog Light`
+- `pccx SystemVerilog Dark`
+
+Light/dark maintenance expectations are documented in
+[`docs/theme-consistency.md`](./docs/theme-consistency.md).
 
 The extension icon is `assets/logo/aperture-mark-128.png`, with source
 SVG logo assets retained under `assets/logo/`.  The copied-asset notice is

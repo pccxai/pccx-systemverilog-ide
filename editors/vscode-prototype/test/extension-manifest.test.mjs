@@ -123,6 +123,11 @@ async function testVisualAssetContributions() {
       uiTheme: "vs",
       path: "./themes/pccx-systemverilog-light-color-theme.json",
     },
+    {
+      label: "pccx SystemVerilog Dark",
+      uiTheme: "vs-dark",
+      path: "./themes/pccx-systemverilog-dark-color-theme.json",
+    },
   ]);
 
   const icon = await readBytes(resolve(EXTENSION_ROOT, manifest.icon));
@@ -146,6 +151,20 @@ async function testVisualAssetContributions() {
   assert.ok(theme.tokenColors.some((token) => (
     token.name === "Types" && token.settings?.foreground === "#0d9488"
   )));
+}
+
+async function testThemeJsonTypes() {
+  const manifest = await readPackageJson();
+  const themes = manifest.contributes?.themes ?? [];
+
+  for (const contribution of themes) {
+    const theme = JSON.parse(await readText(resolve(EXTENSION_ROOT, contribution.path)));
+    if (contribution.uiTheme === "vs-dark") {
+      assert.equal(theme.type, "dark");
+    } else {
+      assert.equal(theme.type, "light");
+    }
+  }
 }
 
 async function testDocsKeepExperimentalScope() {
@@ -187,6 +206,7 @@ await testPackageManifestShape();
 await testNoMarketplacePublishingShape();
 await testCommandContributions();
 await testVisualAssetContributions();
+await testThemeJsonTypes();
 await testDocsKeepExperimentalScope();
 
 console.log("vscode extension manifest tests ok");
