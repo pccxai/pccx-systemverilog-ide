@@ -120,12 +120,41 @@ export const SHOW_DIAGNOSTICS_HANDOFF_SUMMARY_COMMAND =
   "pccxSystemVerilog.showDiagnosticsHandoffSummary";
 export const SHOW_KV260_STATUS_PANEL_COMMAND =
   "pccxSystemVerilog.showKv260StatusPanel";
+export const V0021_SHOW_KV260_STATUS_PANEL_COMMAND =
+  "pccxSystemVerilog.v0021.showKv260StatusPanel";
+export const OPEN_V0021_RUNBOOK_COMMAND =
+  "pccxSystemVerilog.v0021.openRunbook";
+export const OPEN_PROJECT_BOARD_COMMAND =
+  "pccxSystemVerilog.v0021.openProjectBoard";
+export const SHOW_TRACE_INSPECT_HELP_COMMAND =
+  "pccxSystemVerilog.v0021.showTraceInspectHelp";
+export const V0021_RUNBOOK_URL =
+  "https://github.com/pccxai/pccx-FPGA-NPU-LLM-kv260/blob/build/v002-kv260-bitstream-runbook/docs/runbooks/v002.1-bitstream-build.md";
+export const PCCX_PROJECT_BOARD_URL =
+  "https://github.com/orgs/pccxai/projects/1";
+export const TRACE_INSPECT_HELP_URL =
+  "https://github.com/pccxai/pccx-lab/blob/docs/trace-pipeline-overview/docs/trace-pipeline.md";
 
 const NAVIGATION_LOCATION_COMMAND_IDS = Object.freeze([
   CHECKED_EXAMPLE_NAVIGATION_COMMAND,
   LIVE_WORKSPACE_NAVIGATION_COMMAND,
   RUN_LIVE_NAVIGATION_COMMAND,
 ]);
+
+const V0021_EXTERNAL_NAVIGATION_TARGETS = Object.freeze({
+  [OPEN_V0021_RUNBOOK_COMMAND]: Object.freeze({
+    label: "v002.1 runbook",
+    url: V0021_RUNBOOK_URL,
+  }),
+  [OPEN_PROJECT_BOARD_COMMAND]: Object.freeze({
+    label: "project board",
+    url: PCCX_PROJECT_BOARD_URL,
+  }),
+  [SHOW_TRACE_INSPECT_HELP_COMMAND]: Object.freeze({
+    label: "trace inspect help",
+    url: TRACE_INSPECT_HELP_URL,
+  }),
+});
 
 export {
   COMMAND_IDS,
@@ -438,6 +467,9 @@ function appendCommandOutput(outputChannel, commandId, result) {
   if (result.kind === "kv260-status-panel") {
     outputChannel.appendLine(formatKv260StatusPanel(result.panel));
   }
+  if (result.kind === "v0021-read-only-navigation") {
+    outputChannel.appendLine(JSON.stringify(result.target, null, 2));
+  }
   if (result.status?.kind === "pccx-lab-backend-status") {
     outputChannel.appendLine(JSON.stringify(result.status, null, 2));
   }
@@ -471,6 +503,61 @@ function showKv260StatusWebview(vscodeApi, panel) {
   }
   webviewPanel.webview.html = renderKv260StatusPanelHtml(panel);
   return webviewPanel;
+}
+
+async function openExternalUrl(vscodeApi, url) {
+  const openExternal = vscodeApi?.env?.openExternal;
+  if (typeof openExternal !== "function") {
+    throw new Error("VS Code external URL navigation is unavailable");
+  }
+  const uri = typeof vscodeApi?.Uri?.parse === "function"
+    ? vscodeApi.Uri.parse(url)
+    : url;
+  await openExternal.call(vscodeApi.env, uri);
+}
+
+async function handleV0021ExternalNavigationCommand(commandId, vscodeApi) {
+  const target = V0021_EXTERNAL_NAVIGATION_TARGETS[commandId];
+  if (!target) {
+    throw new Error(`unknown v002.1 navigation command: ${commandId}`);
+  }
+  await openExternalUrl(vscodeApi, target.url);
+  const result = {
+    ok: true,
+    commandId,
+    kind: "v0021-read-only-navigation",
+    target,
+    safety: {
+      shellExecution: false,
+      allowlistChange: false,
+      boardApiAccess: false,
+      marketplaceFlow: false,
+    },
+  };
+  vscodeApi?.window?.showInformationMessage?.(
+    `Opened ${target.label}.`,
+    result,
+  );
+  return result;
+}
+
+function createKv260StatusPanelResult(commandId, vscodeApi, runtime = {}) {
+  const panel = createKv260StatusPanel(runtime.kv260StatusInputs);
+  const result = {
+    ok: true,
+    commandId,
+    kind: "kv260-status-panel",
+    panel,
+  };
+  const webviewPanel = showKv260StatusWebview(vscodeApi, panel);
+  if (webviewPanel) {
+    result.presentation = "webview";
+  }
+  vscodeApi?.window?.showInformationMessage?.(
+    `KV260 status surface: ${panel.lab.frameCount} trace frame(s).`,
+    result,
+  );
+  return result;
 }
 
 function facadeRunnerFromRuntime(runtime = {}) {
@@ -1136,24 +1223,25 @@ export function createCommandHandler(commandId, vscodeApi, runtime = {}) {
       return result;
     }
 
-    if (commandId === SHOW_KV260_STATUS_PANEL_COMMAND) {
+    if (
+      commandId === SHOW_KV260_STATUS_PANEL_COMMAND ||
+      commandId === V0021_SHOW_KV260_STATUS_PANEL_COMMAND
+    ) {
       let result;
       try {
-        const panel = createKv260StatusPanel(runtime.kv260StatusInputs);
-        result = {
-          ok: true,
-          commandId,
-          kind: "kv260-status-panel",
-          panel,
-        };
-        const webviewPanel = showKv260StatusWebview(vscodeApi, panel);
-        if (webviewPanel) {
-          result.presentation = "webview";
-        }
-        vscodeApi?.window?.showInformationMessage?.(
-          `KV260 status surface: ${panel.lab.frameCount} trace frame(s).`,
-          result,
-        );
+        result = createKv260StatusPanelResult(commandId, vscodeApi, runtime);
+      } catch (error) {
+        result = { ok: false, commandId, error: error.message };
+        vscodeApi?.window?.showWarningMessage?.(result.error, result);
+      }
+      appendCommandOutput(runtime.outputChannel, commandId, result);
+      return result;
+    }
+
+    if (Object.hasOwn(V0021_EXTERNAL_NAVIGATION_TARGETS, commandId)) {
+      let result;
+      try {
+        result = await handleV0021ExternalNavigationCommand(commandId, vscodeApi);
       } catch (error) {
         result = { ok: false, commandId, error: error.message };
         vscodeApi?.window?.showWarningMessage?.(result.error, result);

@@ -35,7 +35,11 @@
     "onCommand:pccxSystemVerilog.showContextBundleAudit",
     "onCommand:pccxSystemVerilog.showPccxLabBackendStatus",
     "onCommand:pccxSystemVerilog.showDiagnosticsHandoffSummary",
-    "onCommand:pccxSystemVerilog.showKv260StatusPanel"
+    "onCommand:pccxSystemVerilog.showKv260StatusPanel",
+    "onCommand:pccxSystemVerilog.v0021.showKv260StatusPanel",
+    "onCommand:pccxSystemVerilog.v0021.openRunbook",
+    "onCommand:pccxSystemVerilog.v0021.openProjectBoard",
+    "onCommand:pccxSystemVerilog.v0021.showTraceInspectHelp"
   ],
   "contributes": {
     "commands": [
@@ -130,6 +134,44 @@
       {
         "command": "pccxSystemVerilog.showKv260StatusPanel",
         "title": "PCCX SystemVerilog: Show KV260 Status Panel (Experimental)"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.showKv260StatusPanel",
+        "title": "PCCX: Show KV260 Status Panel"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.openRunbook",
+        "title": "PCCX: Open v002.1 Runbook"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.openProjectBoard",
+        "title": "PCCX: Open Project Board"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.showTraceInspectHelp",
+        "title": "PCCX: Show Trace Inspect Help"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "pccxSystemVerilog.v0021.showKv260StatusPanel",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.openRunbook",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.openProjectBoard",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.showTraceInspectHelp",
+        "key": "ctrl+alt+i",
+        "mac": "cmd+alt+i"
       }
     ],
     "configuration": {

@@ -14,7 +14,11 @@ import {
   CHECKED_EXAMPLE_NAVIGATION_COMMAND,
   FACADE_COMMAND_IDS,
   LIVE_WORKSPACE_NAVIGATION_COMMAND,
+  OPEN_PROJECT_BOARD_COMMAND,
+  OPEN_V0021_RUNBOOK_COMMAND,
+  PCCX_PROJECT_BOARD_URL,
   PCCX_LAB_BACKEND_STATUS_COMMAND,
+  SHOW_TRACE_INSPECT_HELP_COMMAND,
   SHOW_CONTEXT_BUNDLE_AUDIT_COMMAND,
   SHOW_DIAGNOSTICS_HANDOFF_SUMMARY_COMMAND,
   SHOW_KV260_STATUS_PANEL_COMMAND,
@@ -22,7 +26,10 @@ import {
   SHOW_PATCH_PROPOSAL_PREVIEW_COMMAND,
   SHOW_RECENT_VALIDATION_RESULTS_COMMAND,
   SHOW_VALIDATION_CACHE_STATUS_COMMAND,
+  TRACE_INSPECT_HELP_URL,
   VALIDATION_PROPOSAL_COMMAND,
+  V0021_RUNBOOK_URL,
+  V0021_SHOW_KV260_STATUS_PANEL_COMMAND,
   activate,
   buildFacadeArgsForCommand,
   buildFacadeInvocationForCommand,
@@ -1592,6 +1599,64 @@ async function testKv260StatusPanelCommandRendersExistingWebviewOnly() {
   assert.match(webviewPanel.webview.html, /<details class="evidence-path">/);
 }
 
+async function testV0021Kv260StatusPanelAliasUsesExistingPanel() {
+  const handler = createCommandHandler(V0021_SHOW_KV260_STATUS_PANEL_COMMAND, null, {});
+
+  const result = await handler();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.commandId, V0021_SHOW_KV260_STATUS_PANEL_COMMAND);
+  assert.equal(result.kind, "kv260-status-panel");
+  assert.equal(result.panel.kind, "kv260-status-panel");
+  assert.equal(result.panel.safety.launcherExecution, false);
+  assert.equal(result.panel.safety.pccxLabExecution, false);
+  assert.equal(result.panel.safety.shellExecution, false);
+  assert.equal(result.panel.safety.sshExecution, false);
+}
+
+async function testV0021ExternalNavigationCommandsOpenUrlsOnly() {
+  const opened = [];
+  const vscodeApi = {
+    Uri: {
+      parse(url) {
+        return { url };
+      },
+    },
+    env: {
+      async openExternal(uri) {
+        opened.push(uri.url);
+      },
+    },
+    window: {
+      showInformationMessage() {},
+    },
+  };
+
+  const commands = [
+    [OPEN_V0021_RUNBOOK_COMMAND, V0021_RUNBOOK_URL],
+    [OPEN_PROJECT_BOARD_COMMAND, PCCX_PROJECT_BOARD_URL],
+    [SHOW_TRACE_INSPECT_HELP_COMMAND, TRACE_INSPECT_HELP_URL],
+  ];
+
+  for (const [commandId, expectedUrl] of commands) {
+    const handler = createCommandHandler(commandId, vscodeApi, {});
+    const result = await handler();
+
+    assert.equal(result.ok, true);
+    assert.equal(result.commandId, commandId);
+    assert.equal(result.kind, "v0021-read-only-navigation");
+    assert.equal(result.target.url, expectedUrl);
+    assert.deepEqual(result.safety, {
+      shellExecution: false,
+      allowlistChange: false,
+      boardApiAccess: false,
+      marketplaceFlow: false,
+    });
+  }
+
+  assert.deepEqual(opened, commands.map(([_commandId, url]) => url));
+}
+
 testKnownFacadeArgs();
 testUnknownCommandsRejected();
 testCheckedExampleDiagnosticsCommandStaysExampleMode();
@@ -1622,5 +1687,7 @@ await testDiagnosticsHandoffSummaryCommandReturnsDataOnlySurface();
 await testPccxLabBackendStatusCommandReturnsStatusOnly();
 await testKv260StatusPanelCommandReturnsDataOnlySurface();
 await testKv260StatusPanelCommandRendersExistingWebviewOnly();
+await testV0021Kv260StatusPanelAliasUsesExistingPanel();
+await testV0021ExternalNavigationCommandsOpenUrlsOnly();
 
 console.log("vscode extension entrypoint tests ok");
