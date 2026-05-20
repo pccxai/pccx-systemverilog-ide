@@ -45,6 +45,29 @@ const V0021_COMMAND_TITLES = new Map([
   ["pccxSystemVerilog.v0021.showTraceInspectHelp", "PCCX: Show Trace Inspect Help"],
 ]);
 
+const V0021_KEYBINDINGS = [
+  {
+    command: "pccxSystemVerilog.v0021.showKv260StatusPanel",
+    key: "ctrl+alt+k",
+    mac: "cmd+alt+k",
+  },
+  {
+    command: "pccxSystemVerilog.v0021.openRunbook",
+    key: "ctrl+alt+r",
+    mac: "cmd+alt+r",
+  },
+  {
+    command: "pccxSystemVerilog.v0021.openProjectBoard",
+    key: "ctrl+alt+p",
+    mac: "cmd+alt+p",
+  },
+  {
+    command: "pccxSystemVerilog.v0021.showTraceInspectHelp",
+    key: "ctrl+alt+i",
+    mac: "cmd+alt+i",
+  },
+];
+
 async function readText(path) {
   return readFile(path, "utf8");
 }
@@ -126,6 +149,19 @@ async function testCommandContributions() {
   assert.equal(contributedCommands.size, COMMAND_IDS.length);
 }
 
+async function testV0021DefaultKeybindings() {
+  const manifest = await readPackageJson();
+  const keybindings = manifest.contributes?.keybindings;
+
+  assert.deepEqual(keybindings, V0021_KEYBINDINGS);
+  for (const keybinding of keybindings) {
+    assert.ok(COMMAND_IDS.includes(keybinding.command));
+    assert.match(keybinding.key, /^ctrl\+alt\+[a-z]$/);
+    assert.match(keybinding.mac, /^cmd\+alt\+[a-z]$/);
+    assert.equal(Object.hasOwn(keybinding, "when"), false);
+  }
+}
+
 async function testDocsKeepExperimentalScope() {
   const readme = await readText(resolve(EXTENSION_ROOT, "README.md"));
   const contract = await readText(resolve(ROOT, "docs/EDITOR_BRIDGE_CONTRACT.md"));
@@ -165,6 +201,7 @@ async function testDocsKeepExperimentalScope() {
 await testPackageManifestShape();
 await testNoMarketplacePublishingShape();
 await testCommandContributions();
+await testV0021DefaultKeybindings();
 await testDocsKeepExperimentalScope();
 
 console.log("vscode extension manifest tests ok");

@@ -152,6 +152,28 @@
         "title": "PCCX: Show Trace Inspect Help"
       }
     ],
+    "keybindings": [
+      {
+        "command": "pccxSystemVerilog.v0021.showKv260StatusPanel",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.openRunbook",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.openProjectBoard",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p"
+      },
+      {
+        "command": "pccxSystemVerilog.v0021.showTraceInspectHelp",
+        "key": "ctrl+alt+i",
+        "mac": "cmd+alt+i"
+      }
+    ],
     "configuration": {
       "title": "PCCX SystemVerilog IDE Prototype",
       "properties": {
