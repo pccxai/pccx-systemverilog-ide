@@ -53,6 +53,10 @@ export const WORKFLOW_COMMAND_IDS = Object.freeze([
   "pccxSystemVerilog.showContextBundleAudit",
 ]);
 
+export const LOCAL_SYNTHESIS_COMMAND_IDS = Object.freeze([
+  "pccxSystemVerilog.showLocalSynthesisPlan",
+]);
+
 export const PCCX_LAB_COMMAND_IDS = Object.freeze([
   "pccxSystemVerilog.showPccxLabBackendStatus",
 ]);
@@ -70,6 +74,7 @@ export const ASSIST_COMMAND_IDS = Object.freeze([
 export const COMMAND_IDS = Object.freeze([
   ...FACADE_COMMAND_IDS,
   ...WORKFLOW_COMMAND_IDS,
+  ...LOCAL_SYNTHESIS_COMMAND_IDS,
   ...PCCX_LAB_COMMAND_IDS,
   ...DIAGNOSTICS_HANDOFF_COMMAND_IDS,
   ...ASSIST_COMMAND_IDS,

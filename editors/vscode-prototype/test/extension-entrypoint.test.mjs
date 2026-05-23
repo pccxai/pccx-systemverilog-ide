@@ -17,6 +17,7 @@ import {
   PCCX_LAB_BACKEND_STATUS_COMMAND,
   SHOW_CONTEXT_BUNDLE_AUDIT_COMMAND,
   SHOW_DIAGNOSTICS_HANDOFF_SUMMARY_COMMAND,
+  SHOW_LOCAL_SYNTHESIS_PLAN_COMMAND,
   SHOW_LOCAL_WORKFLOW_STATUS_COMMAND,
   SHOW_PATCH_PROPOSAL_PREVIEW_COMMAND,
   SHOW_RECENT_VALIDATION_RESULTS_COMMAND,
@@ -857,6 +858,36 @@ async function testAssistStatusCommandReturnsCitationCounts() {
   assert.ok(result.citations.uniqueCitationCount >= 20);
   assert.equal(result.demoPlan.executesSimulation, false);
   assert.equal(result.demoPlan.writesRtl, false);
+}
+
+async function testLocalSynthesisPlanCommandReturnsPlanOnly() {
+  const handler = createCommandHandler(SHOW_LOCAL_SYNTHESIS_PLAN_COMMAND, null, {});
+
+  const result = await handler({
+    vendor: "vivado",
+    scriptPath: "build/synth.tcl",
+    workDir: "build",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.commandId, SHOW_LOCAL_SYNTHESIS_PLAN_COMMAND);
+  assert.equal(result.kind, "local-synthesis-plan");
+  assert.equal(result.plan.version, "pccx.localSynthesisPlan.v0");
+  assert.equal(result.plan.localBuild.vendor, "vivado");
+  assert.equal(result.plan.localBuild.offlineSupported, true);
+  assert.equal(result.plan.syncStatus.cloudSyncRequired, false);
+  assert.equal(result.plan.safety.executes, false);
+  assert.deepEqual(result.plan.localBuild.synthArgv.slice(0, 3), [
+    "pccx",
+    "synth",
+    "--local",
+  ]);
+  assert.deepEqual(result.plan.localBuild.deployArgv.slice(0, 4), [
+    "pccx",
+    "deploy",
+    "--target",
+    "kv260",
+  ]);
 }
 
 async function testVeribleLintCommandPublishesDiagnosticsFromFixedInvocation() {
@@ -1738,6 +1769,7 @@ await testActivationRegistersCheckedExampleDefinitionProvider();
 await testNoVsCodeRuntimeIsANoop();
 await testCommandHandlerCanBeUsedWithoutRealVsCode();
 await testAssistStatusCommandReturnsCitationCounts();
+await testLocalSynthesisPlanCommandReturnsPlanOnly();
 await testVeribleLintCommandPublishesDiagnosticsFromFixedInvocation();
 await testPrepareSimulationHandoffIsDataOnly();
 await testWorkflowStatusCommandReturnsDisabledBackendNone();

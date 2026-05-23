@@ -146,6 +146,7 @@ The contributed commands are:
 - `pccxSystemVerilog.clearPatchProposalPreview`
 - `pccxSystemVerilog.showLocalWorkflowStatus`
 - `pccxSystemVerilog.showContextBundleAudit`
+- `pccxSystemVerilog.showLocalSynthesisPlan`
 - `pccxSystemVerilog.showPccxLabBackendStatus`
 - `pccxSystemVerilog.showDiagnosticsHandoffSummary`
 - `pccxSystemVerilog.showAssistStatus`
@@ -229,6 +230,15 @@ commands.
 simulation handoff descriptor for the validation boundary.  It does not
 execute a simulator, write RTL, touch hardware, or bypass the existing
 approved validation runner gate.
+
+`pccxSystemVerilog.showLocalSynthesisPlan` creates a plan-only local
+synthesis descriptor for VS Code and JetBrains surfaces.  It returns the
+fixed CLI argument arrays for `pccx synth --local` and
+`pccx deploy --target kv260`, marks user-machine vendor toolchains as the
+execution boundary, keeps cloud sync optional and entitlement-gated, and
+does not execute shell commands, call network paths, upload artifacts, or
+touch hardware.  The boundary notes are tracked in
+[`docs/local-synthesis-extension-plan.md`](./docs/local-synthesis-extension-plan.md).
 
 `pccxSystemVerilog.showPccxLabBackendStatus` prepares a command palette
 status surface for future pccx-lab integration.  It returns the configured
@@ -445,10 +455,11 @@ device.  The boundary notes are tracked in
 `src/local-workflow-status.mjs` summarizes local prototype state for
 `pccxSystemVerilog.showLocalWorkflowStatus`: extension mode, live workspace
 gate, validation runner state, recent validation cache status, pccx-lab
-descriptor state, launcher fixture state, and a bounded context item count.
-It uses local/fixture data only and does not execute pccx-lab, call the
-launcher, call providers, implement an MCP server, bundle a language server, or package the
-extension.
+descriptor state, launcher fixture state, local synthesis plan boundary,
+and a bounded context item count. It uses local/fixture data only and does
+not execute pccx-lab, call the launcher, run local synthesis, call
+providers, implement an MCP server, bundle a language server, or package
+the extension.
 
 `src/context-bundle-audit.mjs` reports approximate context bundle size,
 diagnostic/snippet/validation summary counts, redaction/truncation flags,

@@ -116,6 +116,7 @@ async function testReadinessDocsAndCiPolicy() {
   assert.match(`${readme}\n${readiness}`, /clearPatchProposalPreview/);
   assert.match(`${readme}\n${readiness}`, /showLocalWorkflowStatus/);
   assert.match(`${readme}\n${readiness}`, /showContextBundleAudit/);
+  assert.match(`${readme}\n${readiness}`, /showLocalSynthesisPlan/);
   assert.match(`${readme}\n${readiness}`, /showPccxLabBackendStatus/);
   assert.match(`${readme}\n${readiness}`, /showDiagnosticsHandoffSummary/);
   assert.match(`${readme}\n${readiness}`, /showAssistStatus/);
@@ -189,6 +190,7 @@ async function testRuntimeRunnerIsPinnedAndBounded() {
   assert.match(suite, /clearPatchProposalPreview/);
   assert.match(suite, /showLocalWorkflowStatus/);
   assert.match(suite, /showContextBundleAudit/);
+  assert.match(suite, /showLocalSynthesisPlan/);
   assert.match(suite, /validationRunner\.enabled/);
   assert.match(suite, /vscodeAdapterSmoke/);
   assert.match(suite, /showPccxLabBackendStatus/);

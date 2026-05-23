@@ -65,6 +65,10 @@ import {
   formatLocalWorkflowStatus,
 } from "./local-workflow-status.mjs";
 import {
+  createLocalSynthesisPlan,
+  formatLocalSynthesisPlan,
+} from "./local-synthesis-plan.mjs";
+import {
   createContextBundleAudit,
   formatContextBundleAudit,
 } from "./context-bundle-audit.mjs";
@@ -119,6 +123,8 @@ export const SHOW_LOCAL_WORKFLOW_STATUS_COMMAND =
   "pccxSystemVerilog.showLocalWorkflowStatus";
 export const SHOW_CONTEXT_BUNDLE_AUDIT_COMMAND =
   "pccxSystemVerilog.showContextBundleAudit";
+export const SHOW_LOCAL_SYNTHESIS_PLAN_COMMAND =
+  "pccxSystemVerilog.showLocalSynthesisPlan";
 export const PCCX_LAB_BACKEND_STATUS_COMMAND =
   "pccxSystemVerilog.showPccxLabBackendStatus";
 export const SHOW_DIAGNOSTICS_HANDOFF_SUMMARY_COMMAND =
@@ -437,6 +443,9 @@ function appendCommandOutput(outputChannel, commandId, result) {
   }
   if (result.kind === "local-workflow-status") {
     outputChannel.appendLine(formatLocalWorkflowStatus(result.status));
+  }
+  if (result.kind === "local-synthesis-plan") {
+    outputChannel.appendLine(formatLocalSynthesisPlan(result.plan));
   }
   if (result.kind === "context-bundle-audit") {
     outputChannel.appendLine(formatContextBundleAudit(result.audit));
@@ -1118,6 +1127,30 @@ export function createCommandHandler(commandId, vscodeApi, runtime = {}) {
         };
         vscodeApi?.window?.showInformationMessage?.(
           `Context bundle audit: ${audit.approximateCharacterCount} character(s), ${audit.diagnosticCount} diagnostic(s).`,
+          result,
+        );
+      } catch (error) {
+        result = { ok: false, commandId, error: error.message };
+        vscodeApi?.window?.showWarningMessage?.(result.error, result);
+      }
+      appendCommandOutput(runtime.outputChannel, commandId, result);
+      return result;
+    }
+
+    if (commandId === SHOW_LOCAL_SYNTHESIS_PLAN_COMMAND) {
+      let result;
+      try {
+        const plan = createLocalSynthesisPlan(
+          input && typeof input === "object" && !input.fsPath ? input : {},
+        );
+        result = {
+          ok: true,
+          commandId,
+          kind: "local-synthesis-plan",
+          plan,
+        };
+        vscodeApi?.window?.showInformationMessage?.(
+          `Local synthesis plan: ${plan.localBuild.vendor}, ${plan.localBuild.target}, plan-only.`,
           result,
         );
       } catch (error) {
