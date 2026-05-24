@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 pccxai
 # PCCX(TM) SystemVerilog IDE public smoke test.
 
 set -euo pipefail
