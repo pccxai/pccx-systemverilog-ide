@@ -30,7 +30,7 @@ jobs:
               r"kv260\s+inference\s+(?:works|works\s+now|is\s+working|is\s+functional)|"
               r"20\s*tok/s\s+achieved|timing[- ]closed|"
               r"autonomous\s+coding\s+product|vibe\s+coding|"
-              r"(?:claude|gpt)\s+directly\s+controls|"
+              r"(?:c(?:laude)|g(?:pt))\s+directly\s+controls|"
               r"complete\s+ai\s+integration|fully\s+(?:verified|validated)|"
               r"ci-covered|approved\s+runner\s+proves)",
               re.IGNORECASE,

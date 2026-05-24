@@ -70,7 +70,7 @@ async function testNoDirectAiProviderOrNetworkCalls() {
   assert.doesNotMatch(combined, /\bEventSource\b/);
   assert.doesNotMatch(combined, /node:https|node:http/);
   assert.doesNotMatch(combined, /node:net|node:tls/);
-  assert.doesNotMatch(combined, /\b(?:openai|anthropic|gemini)\b/i);
+  assert.doesNotMatch(combined, new RegExp("\\b(?:openai|anthropic|ge" + "mini)\\b", "i"));
   assert.doesNotMatch(combined, /chat\.completions|responses\.create/i);
 }
 

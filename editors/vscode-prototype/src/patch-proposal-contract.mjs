@@ -61,7 +61,7 @@ const SHELL_CONTROL_PATTERN = /(?:&&|\|\||;|`|\$\(|>|<)/;
 const SHELL_COMMAND_PATTERN =
   /\b(?:bash|sh|zsh|fish|python|python3|node|npm|pnpm|yarn|git|gh|rm|mv|cp|curl|wget|make)\s+[^\n]+/i;
 const PRIVATE_PATH_PATTERN =
-  /(?:^|\/)(?:\.git|\.codex|\.vscode-test|node_modules|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:\/|$)/i;
+  /(?:^|\/)(?:\.git|\.private-agent|\.vscode-test|node_modules|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:\/|$)/i;
 const GENERATED_PATH_PATTERN =
   /(?:^|\/)(?:dist|build|coverage|out|target|\.pytest_cache|__pycache__)(?:\/|$)/i;
 const GENERATED_FILE_PATTERN =

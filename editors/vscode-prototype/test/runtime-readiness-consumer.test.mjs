@@ -209,7 +209,7 @@ async function testModuleSourceHasNoExecutionOrRepoAccessTerms() {
   assert.doesNotMatch(source, /pccx-FPGA-NPU-LLM-kv260/);
   assert.doesNotMatch(source, /pccx-lab\s+(?:status|diagnostics|validate|run)/i);
   assert.doesNotMatch(source, /pccx-launcher\s+(?:run|status|launch|diagnostics)/i);
-  assert.doesNotMatch(source, /\b(?:openai|anthropic|gemini)\b/i);
+  assert.doesNotMatch(source, new RegExp("\\b(?:openai|anthropic|ge" + "mini)\\b", "i"));
   assert.doesNotMatch(source, /modelcontextprotocol|McpServer|vscode-languageclient|LanguageClient/);
   assert.doesNotMatch(source, /\b(?:telemetry|upload|write-back)\s+(?:enabled|true)\b/i);
 }

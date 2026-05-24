@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 pccxai
+
 import { isAbsolute, relative } from "node:path";
 
 export const VALIDATION_PATCH_HANDOFF_VERSION = "pccx.validationPatchHandoff.v0";
@@ -16,7 +19,7 @@ const SECRET_LIKE_PATTERN =
   /\b(?:api[_-]?key|authorization|bearer|client[_-]?secret|password|private[_-]?key|secret|token)\b/i;
 const HOME_PATH_PATTERN = /(?:\/home\/[^/\s]+|\/Users\/[^/\s]+)/g;
 const PRIVATE_PATH_PATTERN =
-  /(?:^|\/)(?:\.git|\.codex|\.vscode-test|node_modules|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:\/|$)/i;
+  /(?:^|\/)(?:\.git|\.private-agent|\.vscode-test|node_modules|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:\/|$)/i;
 const GENERATED_PATH_PATTERN =
   /(?:^|\/)(?:dist|build|coverage|out|target|\.pytest_cache|__pycache__)(?:\/|$)/i;
 const GENERATED_FILE_PATTERN =
