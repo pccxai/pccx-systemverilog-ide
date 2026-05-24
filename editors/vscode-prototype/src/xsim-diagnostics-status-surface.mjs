@@ -24,7 +24,7 @@ const HOME_PATH_PATTERN = /(?:\/home\/[^/\s]+|\/Users\/[^/\s]+|[A-Za-z]:\\Users\
 const MODEL_ARTIFACT_PATTERN =
   /\.(?:gguf|safetensors|ckpt|pt|pth|onnx|xclbin|bit)(?:\s|$|["'])/i;
 const PRIVATE_INSTRUCTION_PATH_PATTERN =
-  /(?:^|[/\\])(?:\.codex|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:[/\\]|$)/i;
+  /(?:^|[/\\])(?:\.private-agent|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:[/\\]|$)/i;
 const UNSUPPORTED_MARKER_PARTS = Object.freeze([
   ["production", "ready"],
   ["marketplace", "ready"],

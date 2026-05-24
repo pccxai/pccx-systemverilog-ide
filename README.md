@@ -16,6 +16,52 @@ Public surface is intentionally minimal while the `pccx-lab` CLI / core
 boundary is being stabilized. The IDE will follow that boundary; it does
 not duplicate analysis logic locally.
 
+## Install
+
+Use a local Python environment and install the package in editable mode:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[test]"
+```
+
+The VS Code prototype lives in
+[`editors/vscode-prototype`](./editors/vscode-prototype). It is a local
+prototype package, not a Marketplace publication.
+
+## Quickstart
+
+Run the scanner-backed CLI against the checked fixtures:
+
+```bash
+pccx-ide check fixtures/ok_module.sv
+pccx-ide index fixtures/modules --format text
+pccx-ide xsim-log fixtures/xsim/mixed.log --format text
+```
+
+For a step-by-step first run, see [QUICKSTART.md](./QUICKSTART.md).
+
+## Smoke Test
+
+Run the repository smoke test before opening a pull request or cutting a
+release:
+
+```bash
+bash scripts/smoke.sh
+```
+
+The smoke test is local and deterministic. It runs the Python test suite and
+fixture-backed CLI checks; it does not run vendor tools, touch hardware, call
+providers, upload source, or publish artifacts.
+
+## Release And Contribution
+
+This repository is Apache-2.0 licensed. See [LICENSE](./LICENSE),
+[CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md), and
+[docs/RELEASE.md](./docs/RELEASE.md).
+
 Direction, source-header policy, and style preservation rules are pinned
 in [`docs/PROJECT_DIRECTION_AND_STYLE.md`](./docs/PROJECT_DIRECTION_AND_STYLE.md).
 New code files and changed legacy code files are expected to carry the

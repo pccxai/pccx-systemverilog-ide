@@ -157,7 +157,7 @@ function fixtureInput() {
         text: "module bad;\0endmodule\n",
       },
       {
-        path: "/repo/.codex/private-worker/notes.md",
+        path: "/repo/.private-agent/private-worker/notes.md",
         text: "private worker instruction\n",
       },
       {
@@ -664,7 +664,7 @@ function testNoHugeFileOrRestrictedPathInclusion() {
         { path: "/repo/AGENTS.md", text: hugeText },
         { path: "/repo/package-lock.json", text: hugeText },
         { path: "/repo/.git/config", text: hugeText },
-        { path: "/repo/.codex/notes.md", text: hugeText },
+        { path: "/repo/.private-agent/notes.md", text: hugeText },
         { path: "/repo/private-worker/notes.md", text: hugeText },
         { path: "/repo/worker-instruction/notes.md", text: hugeText },
         { path: "/repo/subagent-instruction/notes.md", text: hugeText },

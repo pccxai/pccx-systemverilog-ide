@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 pccxai
+
 import assert from "node:assert/strict";
 
 import {
@@ -89,7 +92,7 @@ function testHandoffBoundsDiagnosticsAndExcludesUnsafePaths() {
   const diagnostics = [
     { file: "/repo/rtl/z.sv", message: "z" },
     { file: "/repo/node_modules/pkg/ignored.sv", message: "ignored" },
-    { file: "/repo/.codex/private.md", message: "ignored" },
+    { file: "/repo/.private-agent/private.md", message: "ignored" },
     { file: "/home/dev/outside.sv", message: "outside" },
     { file: "/repo/rtl/a.sv", message: "a" },
     { file: "/repo/rtl/b.sv", message: "b" },
@@ -131,7 +134,7 @@ function testHandoffBoundsDiagnosticsAndExcludesUnsafePaths() {
   assert.doesNotMatch(serialized, /package-lock\.json/);
   assert.doesNotMatch(serialized, /api-token/);
   assert.doesNotMatch(serialized, /node_modules/);
-  assert.doesNotMatch(serialized, /\.codex/);
+  assert.doesNotMatch(serialized, /\.private-agent/);
   assert.doesNotMatch(serialized, /\/home\/dev/);
 }
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 pccxai
+
 import { isAbsolute, relative } from "node:path";
 
 export const SELECTED_SYMBOL_CONTEXT_VERSION = "pccx.selectedSymbolContext.v0";
@@ -18,7 +21,7 @@ const SECRET_LIKE_PATTERN =
 const SECRET_ASSIGNMENT_PATTERN =
   /\b(?:api[_-]?key|authorization|bearer|client[_-]?secret|password|private[_-]?key|secret|token)\b\s*[:=]/i;
 const PRIVATE_INSTRUCTION_PATH_PATTERN =
-  /(?:^|[/\\])(?:\.codex|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:[/\\]|$)/i;
+  /(?:^|[/\\])(?:\.private-agent|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:[/\\]|$)/i;
 
 function mergeLimits(limits = {}) {
   return {

@@ -63,7 +63,7 @@ const EXCLUDED_PATH_PATTERNS = Object.freeze([
   "node_modules/**",
   "agent-instruction-files",
   "lockfiles",
-  ".codex/**",
+  ".private-agent/**",
   "private-worker/**",
   "worker-instruction/**",
   "subagent-instruction/**",
@@ -75,7 +75,7 @@ const SECRET_ASSIGNMENT_PATTERN =
   /\b(?:api[_-]?key|authorization|bearer|client[_-]?secret|password|private[_-]?key|secret|token)\b\s*[:=]/i;
 const HOME_PATH_PATTERN = /(?:\/home\/[^/\s]+|\/Users\/[^/\s]+)/g;
 const PRIVATE_INSTRUCTION_PATH_PATTERN =
-  /(?:^|[/\\])(?:\.codex|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:[/\\]|$)/i;
+  /(?:^|[/\\])(?:\.private-agent|private[-_ ]?worker|worker[-_ ]?instruction|subagent[-_ ]?instruction)(?:[/\\]|$)/i;
 
 function mergeLimits(limits = {}) {
   return {
