@@ -59,6 +59,9 @@ should earn CI promotion separately.
 - Diagnostics handoff summary status smoke.  The command reports the
   existing adapter summary as local data and does not execute launcher,
   pccx-lab, shell commands, providers, MCP, or LSP.
+- Local synthesis plan smoke.  The command returns fixed `pccx synth
+  --local` and `pccx deploy --target kv260` argument arrays for the CLI
+  boundary and does not execute vendor tools.
 - Guard behavior for the local-only Extension Host runtime smoke.
 - Pinned Extension Host activation and command-registration smoke when
   explicitly enabled locally.

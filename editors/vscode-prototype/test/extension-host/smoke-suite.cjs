@@ -79,6 +79,7 @@ async function run() {
     "pccxSystemVerilog.clearPatchProposalPreview",
     "pccxSystemVerilog.showLocalWorkflowStatus",
     "pccxSystemVerilog.showContextBundleAudit",
+    "pccxSystemVerilog.showLocalSynthesisPlan",
     "pccxSystemVerilog.showPccxLabBackendStatus",
     "pccxSystemVerilog.showDiagnosticsHandoffSummary",
     "pccxSystemVerilog.showAssistStatus",
@@ -467,6 +468,9 @@ async function run() {
   assert.equal(localWorkflowStatus.status.launcherBoundary.launcherCalls, false);
   assert.equal(localWorkflowStatus.status.safety.providerCalls, false);
   assert.equal(localWorkflowStatus.status.safety.pccxLabExecution, false);
+  assert.equal(localWorkflowStatus.status.localSynthesisBoundary.version, "pccx.localSynthesisPlan.v0");
+  assert.equal(localWorkflowStatus.status.localSynthesisBoundary.offlineSupported, true);
+  assert.equal(localWorkflowStatus.status.localSynthesisBoundary.executes, false);
 
   const contextBundleAudit = await vscode.commands.executeCommand(
     "pccxSystemVerilog.showContextBundleAudit",
@@ -477,6 +481,22 @@ async function run() {
   assert.equal(contextBundleAudit.audit.safety.providerCalls, false);
   assert.equal(contextBundleAudit.audit.safety.fullLogsExcluded, true);
   assert.doesNotMatch(JSON.stringify(contextBundleAudit.audit), /\/home\//);
+
+  const localSynthesisPlan = await vscode.commands.executeCommand(
+    "pccxSystemVerilog.showLocalSynthesisPlan",
+    { vendor: "auto", scriptPath: "synth.tcl", workDir: "." },
+  );
+  assert.equal(localSynthesisPlan.ok, true);
+  assert.equal(localSynthesisPlan.kind, "local-synthesis-plan");
+  assert.equal(localSynthesisPlan.plan.version, "pccx.localSynthesisPlan.v0");
+  assert.equal(localSynthesisPlan.plan.localBuild.offlineSupported, true);
+  assert.equal(localSynthesisPlan.plan.localBuild.cloudSyncRequired, false);
+  assert.equal(localSynthesisPlan.plan.safety.executes, false);
+  assert.deepEqual(localSynthesisPlan.plan.localBuild.synthArgv.slice(0, 3), [
+    "pccx",
+    "synth",
+    "--local",
+  ]);
 
   const disabledValidationRun = await vscode.commands.executeCommand(
     "pccxSystemVerilog.runApprovedValidationCommand",

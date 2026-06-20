@@ -33,6 +33,7 @@
     "onCommand:pccxSystemVerilog.clearPatchProposalPreview",
     "onCommand:pccxSystemVerilog.showLocalWorkflowStatus",
     "onCommand:pccxSystemVerilog.showContextBundleAudit",
+    "onCommand:pccxSystemVerilog.showLocalSynthesisPlan",
     "onCommand:pccxSystemVerilog.showPccxLabBackendStatus",
     "onCommand:pccxSystemVerilog.showDiagnosticsHandoffSummary",
     "onCommand:pccxSystemVerilog.showAssistStatus",
@@ -122,6 +123,10 @@
       {
         "command": "pccxSystemVerilog.showContextBundleAudit",
         "title": "PCCX SystemVerilog: Show Context Bundle Audit (Experimental)"
+      },
+      {
+        "command": "pccxSystemVerilog.showLocalSynthesisPlan",
+        "title": "PCCX SystemVerilog: Show Local Synthesis Plan (Experimental, No Execution)"
       },
       {
         "command": "pccxSystemVerilog.showPccxLabBackendStatus",

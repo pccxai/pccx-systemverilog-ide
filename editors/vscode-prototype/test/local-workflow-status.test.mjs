@@ -95,12 +95,44 @@ function testLocalWorkflowStatusUsesDeterministicLocalDataOnly() {
   assert.equal(status.runtimeReadinessBoundary.runtimeEvidenceState, "blocked");
   assert.equal(status.runtimeReadinessBoundary.throughputState, "target");
   assert.equal(status.runtimeReadinessBoundary.blockerCount, 6);
+  assert.equal(status.localSynthesisBoundary.version, "pccx.localSynthesisPlan.v0");
+  assert.equal(status.localSynthesisBoundary.status, "plan-only");
+  assert.equal(status.localSynthesisBoundary.vendor, "auto");
+  assert.equal(status.localSynthesisBoundary.target, "kv260");
+  assert.equal(status.localSynthesisBoundary.offlineSupported, true);
+  assert.equal(status.localSynthesisBoundary.cloudSyncRequired, false);
+  assert.equal(
+    status.localSynthesisBoundary.vscodeCommandId,
+    "pccxSystemVerilog.showLocalSynthesisPlan",
+  );
+  assert.equal(
+    status.localSynthesisBoundary.jetbrainsActionId,
+    "pccx.systemverilog.showLocalSynthesisPlan",
+  );
+  assert.equal(status.localSynthesisBoundary.executes, false);
+  assert.equal(status.localSynthesisBoundary.shellExecution, false);
+  assert.equal(status.localSynthesisBoundary.networkCalls, false);
+  assert.equal(status.localSynthesisBoundary.providerCalls, false);
+  assert.deepEqual(status.localSynthesisBoundary.synthArgv.slice(0, 3), [
+    "pccx",
+    "synth",
+    "--local",
+  ]);
+  assert.deepEqual(status.localSynthesisBoundary.deployArgv.slice(0, 4), [
+    "pccx",
+    "deploy",
+    "--target",
+    "kv260",
+  ]);
   assert.equal(status.contextBundle.itemCount, 15);
   assert.equal(status.safety.providerCalls, false);
   assert.equal(status.safety.launcherCalls, false);
   assert.equal(status.safety.pccxLabExecution, false);
   assert.equal(status.safety.fpgaRepoAccess, false);
   assert.equal(status.safety.kv260RuntimeExecution, false);
+  assert.equal(status.safety.localSynthesisExecution, false);
+  assert.equal(status.safety.networkCalls, false);
+  assert.equal(status.safety.cloudSyncRequired, false);
   assert.equal(status.safety.telemetry, false);
   assert.equal(status.safety.automaticUpload, false);
   assert.equal(status.safety.writeBack, false);
@@ -126,12 +158,16 @@ function testLocalWorkflowStatusDefaultsAreDisabledAndSafe() {
   assert.equal(status.runtimeReadinessBoundary.kv260RuntimeExecution, false);
   assert.equal(status.runtimeReadinessBoundary.statusAnswer, "blocked_not_yet_evidence_backed");
   assert.equal(status.runtimeReadinessBoundary.blockerCount, 6);
+  assert.equal(status.localSynthesisBoundary.executes, false);
+  assert.equal(status.localSynthesisBoundary.offlineSupported, true);
+  assert.equal(status.localSynthesisBoundary.cloudSyncRequired, false);
   assert.match(text, /Local Workflow Status/);
   assert.match(text, /validationRunner: disabled/);
   assert.match(text, /diagnosticsHandoffBoundary: pccx\.diagnosticsHandoff\.v0 readOnly=yes/);
   assert.match(text, /diagnosticsHandoffSummary: available diagnostics=5/);
   assert.match(text, /runtimeReadinessBoundary: pccx\.runtimeReadiness\.v0 readOnly=yes/);
   assert.match(text, /runtimeReadinessSummary: blocked_not_yet_evidence_backed readiness=blocked blockers=6/);
+  assert.match(text, /localSynthesisBoundary: pccx\.localSynthesisPlan\.v0 vendor=auto offline=yes vscode=yes jetbrains=yes/);
   assert.match(text, /no pccx-lab execution/);
   assert.match(text, /no FPGA repo access/);
   assert.match(text, /no KV260 runtime/);

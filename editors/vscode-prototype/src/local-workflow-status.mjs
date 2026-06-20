@@ -19,6 +19,9 @@ import {
 import {
   createRuntimeReadinessStatusSurface,
 } from "./runtime-readiness-status-surface.mjs";
+import {
+  createLocalSynthesisPlan,
+} from "./local-synthesis-plan.mjs";
 
 export const LOCAL_WORKFLOW_STATUS_VERSION = "pccx.localWorkflowStatus.v0";
 
@@ -75,6 +78,7 @@ export function createLocalWorkflowStatus(config = {}, input = {}) {
   const runtimeReadinessSurface = createRuntimeReadinessStatusSurface(
     input.runtimeReadinessSummary,
   );
+  const localSynthesisPlan = createLocalSynthesisPlan(input.localSynthesis ?? {});
   const validationCache = validationStatusFromCache(input.validationResultCache);
   const extensionMode = typeof config.mode === "string" ? config.mode : "checkedExample";
   const validationRunner = config.validationRunner ?? {};
@@ -144,6 +148,22 @@ export function createLocalWorkflowStatus(config = {}, input = {}) {
       throughputState: runtimeReadinessSurface.states.throughput,
       blockerCount: runtimeReadinessSurface.blockers.count,
     },
+    localSynthesisBoundary: {
+      version: localSynthesisPlan.version,
+      status: "plan-only",
+      vendor: localSynthesisPlan.localBuild.vendor,
+      target: localSynthesisPlan.localBuild.target,
+      offlineSupported: localSynthesisPlan.localBuild.offlineSupported === true,
+      cloudSyncRequired: localSynthesisPlan.localBuild.cloudSyncRequired === true,
+      vscodeCommandId: localSynthesisPlan.surfaces.vscode.commandId,
+      jetbrainsActionId: localSynthesisPlan.surfaces.jetbrains.actionId,
+      executes: localSynthesisPlan.safety.executes === true,
+      shellExecution: localSynthesisPlan.safety.shellExecution === true,
+      networkCalls: localSynthesisPlan.safety.networkCalls === true,
+      providerCalls: localSynthesisPlan.safety.providerCalls === true,
+      synthArgv: localSynthesisPlan.localBuild.synthArgv,
+      deployArgv: localSynthesisPlan.localBuild.deployArgv,
+    },
     contextBundle: contextBundleEstimate({
       ...input,
       runtimeReadinessBlockerCount: runtimeReadinessSurface.blockers.count,
@@ -154,6 +174,9 @@ export function createLocalWorkflowStatus(config = {}, input = {}) {
       pccxLabExecution: false,
       fpgaRepoAccess: false,
       kv260RuntimeExecution: false,
+      localSynthesisExecution: false,
+      networkCalls: false,
+      cloudSyncRequired: false,
       mcpCalls: false,
       lspImplemented: false,
       marketplaceFlow: false,
@@ -177,6 +200,7 @@ export function formatLocalWorkflowStatus(status) {
     `diagnosticsHandoffSummary: ${status.diagnosticsHandoffBoundary.surfaceStatus} diagnostics=${status.diagnosticsHandoffBoundary.diagnosticCount}`,
     `runtimeReadinessBoundary: ${status.runtimeReadinessBoundary.supportedSchemaVersion} readOnly=${status.runtimeReadinessBoundary.readOnly ? "yes" : "no"}`,
     `runtimeReadinessSummary: ${status.runtimeReadinessBoundary.statusAnswer} readiness=${status.runtimeReadinessBoundary.readinessState} blockers=${status.runtimeReadinessBoundary.blockerCount}`,
+    `localSynthesisBoundary: ${status.localSynthesisBoundary.version} vendor=${status.localSynthesisBoundary.vendor} offline=${status.localSynthesisBoundary.offlineSupported ? "yes" : "no"} vscode=yes jetbrains=yes`,
     `contextBundleItems: ${status.contextBundle.itemCount}`,
     "safety: no provider calls, no launcher calls, no pccx-lab execution, no FPGA repo access, no KV260 runtime",
   ].join("\n");
